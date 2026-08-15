@@ -1,0 +1,221 @@
+import fs from 'fs';
+import path from 'path';
+import { DatabaseSchema, ProductData, StoreSettings, Order } from '@/types/landing';
+
+const DATA_DIR = path.join(process.cwd(), 'data');
+const DB_FILE = path.join(DATA_DIR, 'db.json');
+
+const DEFAULT_DB: DatabaseSchema = {
+  product: {
+    brandName: 'JHT HUB',
+    productName: 'প্রিমিয়াম ১০ পিস আতর কম্বো',
+    headlinePre: 'মাত্র ৪৯০ টাকায় পাচ্ছেন',
+    headlineHighlight: 'প্রিমিয়াম ১০ পিস আতর',
+    headlinePost: '১০টি ভিন্ন ভিন্ন ফ্লেভারের আতর পাচ্ছেন',
+    headlineSub: '১০০% অ্যালকোহল মুক্ত • লং লাস্টিং ১২+ ঘণ্টা • প্রিমিয়াম সুবাস',
+    freeDeliveryHeadline: 'সাথে সারা বাংলাদেশ ডেলিভারি চার্জ ফ্রি',
+    stockCount: 23,
+    countdownHours: 12,
+    mainBannerImage: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?w=1000&q=80',
+    galleryImages: [
+      'https://images.unsplash.com/photo-1594035910387-fea47794261f?w=1000&q=80',
+      'https://images.unsplash.com/photo-1547887537-6158d64c35b3?w=1000&q=80',
+      'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=1000&q=80'
+    ],
+    deliveryChargeDhaka: 0,
+    deliveryChargeOutside: 0,
+    freeDeliveryDhaka: true,
+    freeDeliveryOutside: true,
+    packages: [
+      {
+        id: 'combo-10',
+        name: '10 Pcs Attar Combo',
+        banglaName: 'আতর কম্বো (১০ পিস)',
+        subtitle: 'প্রিমিয়াম ১০ পিস আতর পাচ্ছেন',
+        quantity: 1,
+        regularPrice: 990,
+        offerPrice: 490,
+        badge: 'Best Deal 🔥',
+        isDefault: true,
+        image: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?w=400&q=80'
+      },
+      {
+        id: 'combo-5',
+        name: '5 Pcs Trial Pack',
+        banglaName: '৫ পিস ট্রায়াল প্যাক',
+        subtitle: '৫টি সেরা ভিন্ন ফ্লেভারের আতর',
+        quantity: 1,
+        regularPrice: 550,
+        offerPrice: 290,
+        badge: 'জনপ্রিয়',
+        isDefault: false,
+        image: 'https://images.unsplash.com/photo-1547887537-6158d64c35b3?w=400&q=80'
+      },
+      {
+        id: 'combo-20',
+        name: '20 Pcs Mega Box',
+        banglaName: '২০ পিস স্পেশাল কম্বো',
+        subtitle: 'সবগুলো ফ্লেভার ডাবল সেট + ফ্রি ডেলিভারি',
+        quantity: 1,
+        regularPrice: 1890,
+        offerPrice: 890,
+        badge: 'মেগা অফার 🎁',
+        isDefault: false,
+        image: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=400&q=80'
+      }
+    ],
+    scents: [
+      { id: 'sc-1', name: 'ইরানি বাখুর', category: 'arabian', notes: 'ঐতিহ্যবাহী মিষ্টি ও মোহনীয় বাখুর নোট' },
+      { id: 'sc-2', name: 'সুলতান', category: 'arabian', notes: 'রাজকীয় স্পাইসি ও উডি সুবাস' },
+      { id: 'sc-3', name: 'এহেসাস আল আরাবিয়া', category: 'arabian', notes: 'মন জুড়ানো মিষ্টি এরাবিয়ান ব্লেন্ড' },
+      { id: 'sc-4', name: 'বাকারাত রোজ', category: 'arabian', notes: 'অপূর্ব ফ্রেশ রোজ ও অ্যাম্বার ফিল' },
+      { id: 'sc-5', name: 'আমীর আল উদ', category: 'arabian', notes: 'গাঢ় ও নিখাদ আভিজাত্যের উদ সুবাস' },
+      { id: 'sc-6', name: 'ভ্যাম্পায়ার ব্লাড', category: 'perfume', notes: 'অত্যন্ত আকর্ষণীয় ও আধুনিক সিগনেচার সুবাস' },
+      { id: 'sc-7', name: 'ক্রিড এভেন্টাস', category: 'perfume', notes: 'বিশ্বখ্যাত ফ্রেশ ফ্রুটি ও স্মোকি পারফিউম নোট' },
+      { id: 'sc-8', name: 'কুল ওয়াটার', category: 'perfume', notes: 'তীব্র সতেজ অ্যাকোয়াটিক ফ্রেশনেস' },
+      { id: 'sc-9', name: 'ডানহিল আইকন', category: 'perfume', notes: 'ক্লাসিক জেন্টলম্যান রিচ ফ্লেভার' },
+      { id: 'sc-10', name: 'ওয়াই এস এল ল্যাকো', category: 'perfume', notes: 'স্পোর্টি, ভাইব্র্যান্ট ও আকর্ষণীয়' }
+    ],
+    features: [],
+    trustBadges: [
+      { id: 'tb-1', title: 'অগ্রিম কোনো টাকা লাগছে না', description: 'ফুল ক্যাশ অন ডেলিভারিতে নিতে পারবেন। পণ্য পেয়ে মূল্য দিন।', iconName: 'Banknote' },
+      { id: 'tb-2', title: 'চেক করে নেওয়ার শতভাগ সুবিধা', description: 'ডেলিভারি ম্যানের সামনে চেক করে দেখুন। পছন্দ না হলে রিটার্ন করে দিন।', iconName: 'CheckCircle2' },
+      { id: 'tb-3', title: '৭ দিনের সহজ রিটার্ন পলিসি', description: 'প্রোডাক্ট রিসিভ করার ৭ দিন পরও রিটার্ন করতে পারবেন।', iconName: 'RotateCcw' },
+      { id: 'tb-4', title: 'ফ্রি হোম ডেলিভারি', description: '১০ পিছ আতর কম্বোর সাথে সারা বাংলাদেশ ডেলিভারি চার্জ সম্পূর্ণ ফ্রি।', iconName: 'Truck' }
+    ],
+    reviews: [],
+    faqList: []
+  },
+  settings: {
+    storeName: 'JHT HUB',
+    hotlinePhone: '01522-133748',
+    whatsappNumber: '8801522133748',
+    messengerUrl: '',
+    facebookPageUrl: '',
+    metaPixelId: '',
+    tiktokPixelId: '',
+    adminPin: 'admin123',
+    announcementText: '🎉 ধামাকা অফার: আজই অর্ডার করলে সারা বাংলাদেশে ক্যাশ অন ডেলিভারি সম্পূর্ণ ফ্রি!',
+    announcementActive: true
+  },
+  orders: [
+    {
+      id: 'HR-1001',
+      customerName: 'মোঃ জাহিদ হাসান',
+      phone: '01712345678',
+      address: 'বাড়ি ১২, রোড ৪, ব্লক সি, বনশ্রী, ঢাকা',
+      cityZone: 'dhaka',
+      selectedPackage: {
+        id: 'combo-10',
+        name: '10 Pcs Attar Combo',
+        banglaName: 'আতর কম্বো (১০ পিস)',
+        price: 490
+      },
+      quantity: 1,
+      subtotal: 490,
+      deliveryCharge: 0,
+      total: 490,
+      notes: 'অফিসের ঠিকানায় ডেলিভারি দিবেন।',
+      status: 'pending',
+      createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
+      updatedAt: new Date(Date.now() - 3600000 * 2).toISOString()
+    }
+  ]
+};
+
+function ensureDataDir() {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+}
+
+export function getDb(): DatabaseSchema {
+  ensureDataDir();
+  if (!fs.existsSync(DB_FILE)) {
+    saveDb(DEFAULT_DB);
+    return DEFAULT_DB;
+  }
+  try {
+    const raw = fs.readFileSync(DB_FILE, 'utf-8');
+    const data = JSON.parse(raw);
+    return {
+      product: { ...DEFAULT_DB.product, ...(data.product || {}) },
+      settings: { ...DEFAULT_DB.settings, ...(data.settings || {}) },
+      orders: data.orders || []
+    };
+  } catch (error) {
+    console.error('Error reading db.json, returning default DB', error);
+    return DEFAULT_DB;
+  }
+}
+
+export function saveDb(data: DatabaseSchema): void {
+  ensureDataDir();
+  fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
+}
+
+export function getProductData(): ProductData {
+  return getDb().product;
+}
+
+export function updateProductData(product: Partial<ProductData>): ProductData {
+  const db = getDb();
+  db.product = { ...db.product, ...product };
+  saveDb(db);
+  return db.product;
+}
+
+export function getSettings(): StoreSettings {
+  return getDb().settings;
+}
+
+export function updateSettings(settings: Partial<StoreSettings>): StoreSettings {
+  const db = getDb();
+  db.settings = { ...db.settings, ...settings };
+  saveDb(db);
+  return db.settings;
+}
+
+export function getOrders(): Order[] {
+  return getDb().orders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
+export function getOrderById(id: string): Order | undefined {
+  return getDb().orders.find((o) => o.id === id);
+}
+
+export function createOrder(orderInput: Omit<Order, 'id' | 'createdAt' | 'updatedAt' | 'status'>): Order {
+  const db = getDb();
+  const nextNum = 1000 + db.orders.length + 1;
+  const newOrder: Order = {
+    ...orderInput,
+    id: `HR-${nextNum}`,
+    status: 'pending',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+  db.orders.unshift(newOrder);
+  saveDb(db);
+  return newOrder;
+}
+
+export function updateOrderStatus(id: string, status: Order['status']): Order | null {
+  const db = getDb();
+  const index = db.orders.findIndex((o) => o.id === id);
+  if (index === -1) return null;
+  db.orders[index].status = status;
+  db.orders[index].updatedAt = new Date().toISOString();
+  saveDb(db);
+  return db.orders[index];
+}
+
+export function deleteOrder(id: string): boolean {
+  const db = getDb();
+  const initialLength = db.orders.length;
+  db.orders = db.orders.filter((o) => o.id !== id);
+  if (db.orders.length !== initialLength) {
+    saveDb(db);
+    return true;
+  }
+  return false;
+}

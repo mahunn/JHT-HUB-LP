@@ -1,0 +1,74 @@
+@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-siliguri: 'Hind Siliguri', sans-serif;
+  --font-inter: 'Inter', sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-family: var(--font-siliguri), var(--font-inter), system-ui, sans-serif;
+}
+
+body {
+  color: #1f2937;
+  background-color: #f8fafc;
+  overflow-x: hidden;
+}
+
+/* Custom glowing and pulsing animations */
+@keyframes glowPulse {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(22, 163, 74, 0.5), 0 0 30px rgba(22, 163, 74, 0.3);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(22, 163, 74, 0.8), 0 0 45px rgba(22, 163, 74, 0.5);
+    transform: scale(1.02);
+  }
+}
+
+.btn-pulse-order {
+  animation: glowPulse 2s infinite ease-in-out;
+}
+
+@keyframes bannerShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer-text {
+  background: linear-gradient(90deg, #15803d 0%, #22c55e 50%, #15803d 100%);
+  background-size: 200% auto;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: bannerShimmer 3s linear infinite;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
