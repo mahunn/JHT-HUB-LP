@@ -12,63 +12,68 @@
 html {
   scroll-behavior: smooth;
   font-family: var(--font-siliguri), var(--font-inter), system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  color: #1f2937;
-  background-color: #f8fafc;
+  color: #1e293b;
+  background-color: #ffffff;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom glowing and pulsing animations */
-@keyframes glowPulse {
-  0%, 100% {
-    box-shadow: 0 0 15px rgba(22, 163, 74, 0.5), 0 0 30px rgba(22, 163, 74, 0.3);
-    transform: scale(1);
+/* Subtle fade-up entrance animation */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
   }
-  50% {
-    box-shadow: 0 0 25px rgba(22, 163, 74, 0.8), 0 0 45px rgba(22, 163, 74, 0.5);
-    transform: scale(1.02);
-  }
-}
-
-.btn-pulse-order {
-  animation: glowPulse 2s infinite ease-in-out;
-}
-
-@keyframes bannerShimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-.shimmer-text {
-  background: linear-gradient(90deg, #15803d 0%, #22c55e 50%, #15803d 100%);
-  background-size: 200% auto;
-  color: transparent;
-  -webkit-background-clip: text;
-  background-clip: text;
-  animation: bannerShimmer 3s linear infinite;
+.animate-fade-up {
+  animation: fadeUp 0.5s ease-out forwards;
 }
 
-/* Custom scrollbar */
+/* Staggered delay utilities */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+
+/* Clean scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
+  background: #d1d5db;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #9ca3af;
+}
+
+/* Better selection */
+::selection {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+/* Clean focus styles */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #10b981;
+  border-color: transparent !important;
 }

@@ -13,12 +13,7 @@ export default function FloatingActions({ settings }: FloatingActionsProps) {
 
   useEffect(() => {
     const handleScroll = () => {
-      // Show bottom bar after scrolling past 300px
-      if (window.scrollY > 300) {
-        setShowBottomBar(true);
-      } else {
-        setShowBottomBar(false);
-      }
+      setShowBottomBar(window.scrollY > 400);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -42,53 +37,57 @@ export default function FloatingActions({ settings }: FloatingActionsProps) {
 
   return (
     <>
-      {/* Floating WhatsApp and Call Icons on Left / Right Desktop & Mobile */}
-      <div className="fixed bottom-20 sm:bottom-6 right-4 z-40 flex flex-col gap-2.5">
+      {/* Desktop: minimal contact sidebar */}
+      <div className="hidden sm:flex fixed bottom-6 right-4 z-40 flex-col gap-2">
         {settings.whatsappNumber && (
           <a
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            title="হোয়াটসঅ্যাপে চ্যাট করুন"
-            className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-green-500 hover:bg-green-600 text-white shadow-xl flex items-center justify-center transition-all hover:scale-110 border-2 border-white"
+            title="WhatsApp"
+            className="w-11 h-11 rounded-full bg-green-500 hover:bg-green-600 text-white shadow-md flex items-center justify-center transition-colors"
           >
-            <MessageCircle className="w-6 h-6 sm:w-7 sm:h-7" />
+            <MessageCircle className="w-5 h-5" />
           </a>
         )}
 
         {settings.hotlinePhone && (
           <a
             href={telUrl}
-            title="হটলাইনে সরাসরি কল করুন"
-            className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white shadow-xl flex items-center justify-center transition-all hover:scale-110 border-2 border-white"
+            title="Call"
+            className="w-11 h-11 rounded-full bg-slate-700 hover:bg-slate-800 text-white shadow-md flex items-center justify-center transition-colors"
           >
-            <Phone className="w-5 h-5 sm:w-6 sm:h-6" />
+            <Phone className="w-4 h-4" />
           </a>
         )}
       </div>
 
-      {/* Sticky Bottom Order Bar on Mobile */}
-      {showBottomBar && (
-        <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-200 p-2.5 shadow-2xl flex items-center gap-2">
+      {/* Mobile: clean sticky bottom bar */}
+      <div
+        className={`sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 p-2.5 shadow-lg transition-transform duration-300 ${
+          showBottomBar ? 'translate-y-0' : 'translate-y-full'
+        }`}
+      >
+        <div className="flex items-center gap-2">
           {settings.hotlinePhone && (
             <a
               href={telUrl}
-              className="px-3.5 py-3 rounded-xl bg-slate-100 text-slate-800 font-bold text-xs flex items-center gap-1.5 flex-shrink-0"
+              className="px-3 py-2.5 rounded-lg bg-slate-100 text-slate-700 font-semibold text-xs flex items-center gap-1.5 flex-shrink-0"
             >
-              <Phone className="w-4 h-4 text-emerald-700" />
-              <span>কল করুন</span>
+              <Phone className="w-3.5 h-3.5" />
+              <span>কল</span>
             </a>
           )}
 
           <button
             onClick={scrollToOrder}
-            className="btn-pulse-order flex-1 bg-gradient-to-r from-emerald-600 to-green-600 text-white font-extrabold py-3 px-4 rounded-xl shadow-lg flex items-center justify-center gap-2 text-base"
+            className="flex-1 bg-emerald-700 hover:bg-emerald-800 active:bg-emerald-900 text-white font-bold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors"
           >
-            <ShoppingBag className="w-5 h-5 text-amber-300" />
-            <span>অর্ডার করুন (ক্যাশ অন ডেলিভারি)</span>
+            <ShoppingBag className="w-4 h-4" />
+            <span>অর্ডার করুন</span>
           </button>
         </div>
-      )}
+      </div>
     </>
   );
 }

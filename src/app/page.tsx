@@ -15,32 +15,30 @@ export default function LandingPage() {
   const settings = getSettings();
 
   return (
-    <main className="min-h-screen flex flex-col bg-slate-50 relative selection:bg-emerald-200 selection:text-emerald-900">
-      {/* Top Urgency Announcement Bar */}
+    <main className="min-h-screen flex flex-col bg-white">
+      {/* Announcement Bar */}
       <AnnouncementBar
         text={settings.announcementText}
         active={settings.announcementActive}
         countdownHours={product.countdownHours}
       />
 
-      {/* 1. Hero & Product Showcase */}
+      {/* Hero & Product */}
       <HeroSection product={product} />
 
-      {/* 2. Scents List (Arabian & Perfume Scents) */}
+      {/* Scents Collection */}
       <ScentsBreakdown scents={product.scents} />
 
-      {/* 3. Hadith about Perfume (মুসনাদুল ফিরদাউস: ৫৯৫৪) */}
-      <div className="px-4">
-        <HadithSection />
-      </div>
+      {/* Hadith */}
+      <HadithSection />
 
-      {/* 4. Trust Badges: আস্থা রাখুন আস্থায় থাকুন */}
+      {/* Trust Badges */}
       <TrustBadges trustBadges={product.trustBadges} />
 
-      {/* 5. Direct High-Converting Cash on Delivery Checkout Form (#ordernowyet) */}
+      {/* Checkout Form */}
       <CheckoutOrderForm product={product} />
 
-      {/* Floating Action Bars (Mobile sticky button, WhatsApp, Hotline dialer) */}
+      {/* Floating Actions */}
       <FloatingActions settings={settings} />
 
       {/* Footer */}

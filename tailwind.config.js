@@ -22,7 +22,7 @@ module.exports = {
           950: '#052e16',
         },
         primary: {
-          DEFAULT: '#15803d', // Islamic Emerald Green
+          DEFAULT: '#15803d',
           dark: '#14532d',
           light: '#22c55e',
         },
@@ -38,23 +38,18 @@ module.exports = {
         sans: ['var(--font-inter)', 'sans-serif'],
       },
       animation: {
-        'pulse-glow': 'pulseGlow 2s infinite ease-in-out',
-        'bounce-subtle': 'bounceSubtle 2s infinite',
-        'float': 'float 3s ease-in-out infinite',
+        'fade-up': 'fadeUp 0.5s ease-out forwards',
+        'slide-in': 'slideIn 0.3s ease-out forwards',
       },
       keyframes: {
-        pulseGlow: {
-          '0%, 100%': { transform: 'scale(1)', boxShadow: '0 0 15px rgba(34, 197, 94, 0.4)' },
-          '50%': { transform: 'scale(1.03)', boxShadow: '0 0 30px rgba(34, 197, 94, 0.8)' },
+        fadeUp: {
+          '0%': { opacity: '0', transform: 'translateY(16px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
         },
-        bounceSubtle: {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-6px)' },
+        slideIn: {
+          '0%': { opacity: '0', transform: 'translateY(8px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
         },
-        float: {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-10px)' },
-        }
       }
     },
   },
