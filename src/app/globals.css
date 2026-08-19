@@ -1,12 +1,13 @@
-@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Bengali:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --font-siliguri: 'Hind Siliguri', sans-serif;
-  --font-inter: 'Inter', sans-serif;
+  --font-bangla: 'Noto Sans Bengali', system-ui, -apple-system, sans-serif;
+  --font-numbers: 'Plus Jakarta Sans', 'Inter', 'Noto Sans Bengali', monospace, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
   --brand-emerald: #047857;
   --brand-emerald-light: #d1fae5;
   --brand-gold: #d97706;
@@ -15,7 +16,8 @@
 
 html {
   scroll-behavior: smooth;
-  font-family: var(--font-siliguri), var(--font-inter), system-ui, sans-serif;
+  font-family: 'Plus Jakarta Sans', 'Inter', 'Noto Sans Bengali', system-ui, -apple-system, sans-serif;
+  font-feature-settings: 'tnum' on, 'lnum' on;
   -webkit-tap-highlight-color: transparent;
 }
 

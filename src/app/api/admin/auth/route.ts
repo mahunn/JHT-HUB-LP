@@ -7,8 +7,8 @@ export async function POST(request: Request) {
     const { username, password } = body;
     const settings = getSettings();
 
-    const validUsername = (settings.adminUsername || 'admin1').trim().toLowerCase();
-    const validPassword = (settings.adminPassword || 'adminjhthub1').trim();
+    const validUsername = (process.env.ADMIN_USERNAME || settings.adminUsername || 'admin1').trim().toLowerCase();
+    const validPassword = (process.env.ADMIN_PASSWORD || settings.adminPassword || 'adminjhthub1').trim();
 
     const isUsernameMatch = username ? username.trim().toLowerCase() === validUsername : false;
     const isPasswordMatch = password ? password.trim() === validPassword : false;

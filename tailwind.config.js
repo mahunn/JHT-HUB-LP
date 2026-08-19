@@ -34,8 +34,10 @@ module.exports = {
         }
       },
       fontFamily: {
-        bangla: ['var(--font-siliguri)', 'sans-serif'],
-        sans: ['var(--font-inter)', 'sans-serif'],
+        bangla: ['var(--font-bangla)', 'sans-serif'],
+        numbers: ['var(--font-numbers)', 'sans-serif'],
+        sans: ['var(--font-sans)', 'sans-serif'],
+        mono: ['var(--font-numbers)', 'ui-monospace', 'monospace'],
       },
       animation: {
         'fade-up': 'fadeUp 0.5s ease-out forwards',

@@ -94,9 +94,6 @@ const DEFAULT_DB: DatabaseSchema = {
     facebookPageUrl: '',
     metaPixelId: '',
     tiktokPixelId: '',
-    adminUsername: 'admin1',
-    adminPassword: 'adminjhthub1',
-    adminPin: 'adminjhthub1',
     announcementText: '🎉 ধামাকা অফার: আজই অর্ডার করলে সারা বাংলাদেশে ক্যাশ অন ডেলিভারি সম্পূর্ণ ফ্রি!',
     announcementActive: true
   },
