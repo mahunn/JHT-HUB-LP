@@ -3,22 +3,33 @@ import { getSettings } from '@/lib/db';
 
 export async function POST(request: Request) {
   try {
-    const { pin } = await request.json();
+    const body = await request.json();
+    const { username, password } = body;
     const settings = getSettings();
 
-    if (pin === settings.adminPin || pin === 'admin123') {
+    const validUsername = (settings.adminUsername || 'admin1').trim().toLowerCase();
+    const validPassword = (settings.adminPassword || 'adminjhthub1').trim();
+
+    const isUsernameMatch = username ? username.trim().toLowerCase() === validUsername : false;
+    const isPasswordMatch = password ? password.trim() === validPassword : false;
+
+    if (isUsernameMatch && isPasswordMatch) {
       const response = NextResponse.json({ success: true });
-      // Set session cookie
+      // Set long-lived session cookie (10 years for permanent login per device)
       response.cookies.set('admin_session', 'authenticated', {
         httpOnly: false,
         secure: process.env.NODE_ENV === 'production',
-        maxAge: 60 * 60 * 24 * 30, // 30 days
+        maxAge: 60 * 60 * 24 * 365 * 10, // 10 years
         path: '/',
+        sameSite: 'lax',
       });
       return response;
     }
 
-    return NextResponse.json({ success: false, error: 'ভুল পিন কোড! অনুগ্রহ করে সঠিক পিন দিন।' }, { status: 401 });
+    return NextResponse.json(
+      { success: false, error: 'ভুল ইউজারনেম অথবা পাসওয়ার্ড! অনুগ্রহ করে আবার চেষ্টা করুন।' },
+      { status: 401 }
+    );
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
@@ -29,3 +40,4 @@ export async function DELETE() {
   response.cookies.delete('admin_session');
   return response;
 }
+

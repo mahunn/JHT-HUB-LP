@@ -13,10 +13,14 @@ import {
   ExternalLink,
   LogOut,
   Lock,
+  User,
+  Eye,
+  EyeOff,
   Menu,
   X,
   Sparkles,
   ShieldCheck,
+  Loader2,
 } from 'lucide-react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -24,17 +28,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [pinInput, setPinInput] = useState<string>('');
+  const [usernameInput, setUsernameInput] = useState<string>('');
+  const [passwordInput, setPasswordInput] = useState<string>('');
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [authError, setAuthError] = useState<string>('');
   const [checkingAuth, setCheckingAuth] = useState<boolean>(true);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [abandonedLeadsCount, setAbandonedLeadsCount] = useState<number>(0);
 
   useEffect(() => {
-    // Check if session cookie exists
-    const hasSession = document.cookie.includes('admin_session=authenticated');
-    if (hasSession) {
+    // Check if session cookie or persistent localStorage flag exists
+    const hasCookie = typeof document !== 'undefined' && document.cookie.includes('admin_session=authenticated');
+    const hasLocal = typeof window !== 'undefined' && localStorage.getItem('jht_admin_auth') === '1';
+
+    if (hasCookie || hasLocal) {
       setIsAuthenticated(true);
+      if (hasLocal && !hasCookie) {
+        document.cookie = 'admin_session=authenticated; path=/; max-age=315360000; SameSite=Lax';
+      }
+      if (hasCookie && !hasLocal) {
+        localStorage.setItem('jht_admin_auth', '1');
+      }
     }
     setCheckingAuth(false);
   }, []);
@@ -57,27 +72,41 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError('');
+    setIsSubmitting(true);
 
     try {
       const res = await fetch('/api/admin/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pin: pinInput.trim() }),
+        body: JSON.stringify({
+          username: usernameInput.trim(),
+          password: passwordInput.trim(),
+        }),
       });
       const data = await res.json();
       if (data.success) {
+        localStorage.setItem('jht_admin_auth', '1');
+        document.cookie = 'admin_session=authenticated; path=/; max-age=315360000; SameSite=Lax';
         setIsAuthenticated(true);
         router.refresh();
       } else {
-        setAuthError(data.error || 'ভুল পিন কোড! আবার চেষ্টা করুন।');
+        setAuthError(data.error || 'ভুল ইউজারনেম অথবা পাসওয়ার্ড! আবার চেষ্টা করুন।');
       }
     } catch (err: any) {
-      setAuthError('সার্ভারে সমস্যা হয়েছে।');
+      setAuthError('সার্ভারে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleLogout = async () => {
-    await fetch('/api/admin/auth', { method: 'DELETE' });
+    try {
+      localStorage.removeItem('jht_admin_auth');
+      document.cookie = 'admin_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      await fetch('/api/admin/auth', { method: 'DELETE' });
+    } catch (e) {
+      console.error(e);
+    }
     setIsAuthenticated(false);
     router.refresh();
   };
@@ -94,8 +123,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-slate-900/90 border border-slate-800 rounded-3xl p-8 shadow-2xl backdrop-blur-xl text-center text-white">
-          <div className="w-20 h-20 relative mx-auto mb-4 bg-white/10 rounded-2xl p-2 border border-white/10 flex items-center justify-center">
+        <div className="max-w-md w-full bg-slate-900/95 border border-slate-800 rounded-3xl p-8 shadow-2xl backdrop-blur-xl text-white">
+          <div className="w-20 h-20 relative mx-auto mb-4 bg-white/10 rounded-2xl p-2 border border-white/10 flex items-center justify-center shadow-inner">
             <Image
               src="/logo.png"
               alt="JHT HUB Logo"
@@ -105,39 +134,74 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             />
           </div>
 
-          <h2 className="text-2xl font-extrabold mb-1">JHT HUB অ্যাডমিন প্যানেল</h2>
-          <p className="text-sm text-slate-400 mb-6">প্রবেশ করতে আপনার সিকিউরিটি পিন দিন</p>
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-extrabold text-white tracking-wide">JHT HUB অ্যাডমিন প্যানেল</h2>
+            <p className="text-xs text-slate-400 mt-1">কন্ট্রোল প্যানেলে প্রবেশ করতে লগইন করুন</p>
+          </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <input
-                type="password"
-                required
-                autoFocus
-                placeholder="পিন কোড লিখুন (Default: admin123)"
-                value={pinInput}
-                onChange={(e) => setPinInput(e.target.value)}
-                className="w-full text-center tracking-widest text-xl px-4 py-3.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-              />
+              <label className="block text-xs font-bold text-slate-300 mb-1.5 flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5 text-emerald-400" />
+                <span>ইউজারনেম</span>
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  value={usernameInput}
+                  onChange={(e) => setUsernameInput(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-800/90 border border-slate-700 rounded-xl text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1.5 flex items-center gap-1.5">
+                <Lock className="w-3.5 h-3.5 text-emerald-400" />
+                <span>পাসওয়ার্ড</span>
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                  className="w-full px-4 py-3 pr-11 bg-slate-800/90 border border-slate-700 rounded-xl text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1 transition-colors"
+                  aria-label="Toggle password visibility"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             {authError && (
-              <div className="text-xs text-red-400 bg-red-950/50 border border-red-800/60 p-2.5 rounded-lg">
+              <div className="text-xs text-red-400 bg-red-950/60 border border-red-800/60 p-3 rounded-xl text-center font-medium">
                 {authError}
               </div>
             )}
 
             <button
               type="submit"
-              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 rounded-xl shadow-lg transition-all text-base"
+              disabled={isSubmitting}
+              className="w-full bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] disabled:opacity-70 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-emerald-950/50 transition-all text-sm flex items-center justify-center gap-2"
             >
-              লগইন করুন
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>যাচাই করা হচ্ছে...</span>
+                </>
+              ) : (
+                <span>লগইন করুন</span>
+              )}
             </button>
           </form>
-
-          <div className="mt-6 pt-4 border-t border-slate-800 text-xs text-slate-500">
-            ডিফল্ট পিন: <code className="text-emerald-400 bg-slate-800 px-2 py-0.5 rounded">admin123</code>
-          </div>
         </div>
       </div>
     );

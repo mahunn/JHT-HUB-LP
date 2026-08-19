@@ -21,10 +21,11 @@ export default function AdminSettingsPage() {
   const [saving, setSaving] = useState<boolean>(false);
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
 
-  // PIN change state
-  const [newPin, setNewPin] = useState<string>('');
-  const [confirmPin, setConfirmPin] = useState<string>('');
-  const [pinError, setPinError] = useState<string>('');
+  // Admin Auth credentials state
+  const [adminUsername, setAdminUsername] = useState<string>('admin1');
+  const [newPassword, setNewPassword] = useState<string>('');
+  const [confirmPassword, setConfirmPassword] = useState<string>('');
+  const [authFormError, setAuthFormError] = useState<string>('');
 
   useEffect(() => {
     fetchSettings();
@@ -36,8 +37,10 @@ export default function AdminSettingsPage() {
       const data = await res.json();
       if (data.success) {
         setSettings(data.settings);
-        setNewPin(data.settings.adminPin || 'admin123');
-        setConfirmPin(data.settings.adminPin || 'admin123');
+        setAdminUsername(data.settings.adminUsername || 'admin1');
+        const pass = data.settings.adminPassword || data.settings.adminPin || 'adminjhthub1';
+        setNewPassword(pass);
+        setConfirmPassword(pass);
       }
     } catch (e) {
       console.error(e);
@@ -50,9 +53,13 @@ export default function AdminSettingsPage() {
     e.preventDefault();
     if (!settings) return;
 
-    setPinError('');
-    if (newPin && newPin !== confirmPin) {
-      setPinError('নতুন পিন এবং নিশ্চিতকরণ পিন মিলছে না!');
+    setAuthFormError('');
+    if (newPassword && newPassword !== confirmPassword) {
+      setAuthFormError('নতুন পাসওয়ার্ড এবং কনফার্ম পাসওয়ার্ড মিলছে না!');
+      return;
+    }
+    if (!adminUsername.trim()) {
+      setAuthFormError('ইউজারনেম খালি রাখা যাবে না!');
       return;
     }
 
@@ -62,7 +69,9 @@ export default function AdminSettingsPage() {
     try {
       const updatedSettings: StoreSettings = {
         ...settings,
-        adminPin: newPin || settings.adminPin,
+        adminUsername: adminUsername.trim(),
+        adminPassword: newPassword || settings.adminPassword || 'adminjhthub1',
+        adminPin: newPassword || settings.adminPin || 'adminjhthub1',
       };
 
       const res = await fetch('/api/settings', {
@@ -122,11 +131,11 @@ export default function AdminSettingsPage() {
       </div>
 
       <form onSubmit={handleSave} className="space-y-6">
-        {/* Contact & Hotline Settings */}
+        {/* Contact & Social Settings */}
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
           <h2 className="text-base font-bold text-slate-900 pb-2 border-b border-slate-200 flex items-center gap-2">
             <Phone className="w-5 h-5 text-emerald-600" />
-            <span>যোগাযোগ ও সাপোর্ট নাম্বার</span>
+            <span>যোগাযোগ ও সোশ্যাল মিডিয়া সেটিংস</span>
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -141,35 +150,42 @@ export default function AdminSettingsPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">হটলাইন কল নাম্বার (Hotline Phone)</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">সরাসরি কল হটলাইন নম্বর</label>
               <input
                 type="text"
-                placeholder="যেমন: 017XXXXXXXX"
                 value={settings.hotlinePhone}
                 onChange={(e) => setSettings({ ...settings, hotlinePhone: e.target.value })}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">হোয়াটসঅ্যাপ নাম্বার (WhatsApp Number)</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">হোয়াটসঅ্যাপ নম্বর (Country code সহ)</label>
               <input
                 type="text"
-                placeholder="88017XXXXXXXX (কান্ট্রি কোড সহ)"
                 value={settings.whatsappNumber}
                 onChange={(e) => setSettings({ ...settings, whatsappNumber: e.target.value })}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">মেসেঞ্জার লিংক / ফেসবুক পেইজ (ঐচ্ছিক)</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">ফেসবুক মেসেঞ্জার লিংক / ইউজারনেম</label>
               <input
                 type="text"
-                placeholder="https://m.me/yourpage"
                 value={settings.messengerUrl}
                 onChange={(e) => setSettings({ ...settings, messengerUrl: e.target.value })}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-bold text-slate-700 mb-1">ফেসবুক পেজ URL</label>
+              <input
+                type="text"
+                value={settings.facebookPageUrl}
+                onChange={(e) => setSettings({ ...settings, facebookPageUrl: e.target.value })}
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
               />
             </div>
           </div>
@@ -179,11 +195,11 @@ export default function AdminSettingsPage() {
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
           <h2 className="text-base font-bold text-slate-900 pb-2 border-b border-slate-200 flex items-center gap-2">
             <Bell className="w-5 h-5 text-emerald-600" />
-            <span>টপ অ্যানাউন্সমেন্ট বার (Top Announcement Bar)</span>
+            <span>ল্যান্ডিং পেইজ টপ অ্যানাউন্সমেন্ট বার (Header Announcement)</span>
           </h2>
 
           <div className="space-y-3">
-            <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+            <label className="flex items-center gap-2.5 text-sm font-bold text-slate-800 cursor-pointer">
               <input
                 type="checkbox"
                 checked={settings.announcementActive}
@@ -213,7 +229,7 @@ export default function AdminSettingsPage() {
           </h2>
 
           <p className="text-xs text-slate-500">
-            শুধু আপনার পিক্সেল আইডি বসিয়ে দিন। PageView, InitiateCheckout এবং Purchase ইভেন্ট স্বয়ংক্রিয়ভাবে ট্র্যাক হবে।
+            আপনার পিক্সেল আইডি বসিয়ে দিন। PageView, InitiateCheckout এবং Purchase ইভেন্ট স্বয়ংক্রিয়ভাবে ট্র্যাক হবে।
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -221,7 +237,6 @@ export default function AdminSettingsPage() {
               <label className="block text-xs font-bold text-slate-700 mb-1">Facebook Meta Pixel ID</label>
               <input
                 type="text"
-                placeholder="যেমন: 1977860962709490"
                 value={settings.metaPixelId}
                 onChange={(e) => setSettings({ ...settings, metaPixelId: e.target.value })}
                 className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
@@ -232,7 +247,6 @@ export default function AdminSettingsPage() {
               <label className="block text-xs font-bold text-slate-700 mb-1">TikTok Pixel ID</label>
               <input
                 type="text"
-                placeholder="যেমন: D66TJ0RC77U42FK00M0G"
                 value={settings.tiktokPixelId}
                 onChange={(e) => setSettings({ ...settings, tiktokPixelId: e.target.value })}
                 className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
@@ -241,36 +255,46 @@ export default function AdminSettingsPage() {
           </div>
         </div>
 
-        {/* Admin PIN Security */}
+        {/* Admin Login Credentials */}
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
           <h2 className="text-base font-bold text-slate-900 pb-2 border-b border-slate-200 flex items-center gap-2">
             <Lock className="w-5 h-5 text-emerald-600" />
-            <span>অ্যাডমিন প্যানেল সিকিউরিটি পিন</span>
+            <span>অ্যাডমিন প্যানেল লগইন ক্রেডেনশিয়াল</span>
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">নতুন পিন কোড (New PIN / Password)</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">ইউজারনেম (Username)</label>
+              <input
+                type="text"
+                value={adminUsername}
+                onChange={(e) => setAdminUsername(e.target.value)}
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">নতুন পাসওয়ার্ড (New Password)</label>
               <input
                 type="password"
-                value={newPin}
-                onChange={(e) => setNewPin(e.target.value)}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
                 className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">পিন নিশ্চিত করুন (Confirm PIN)</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">পাসওয়ার্ড নিশ্চিত করুন (Confirm)</label>
               <input
                 type="password"
-                value={confirmPin}
-                onChange={(e) => setConfirmPin(e.target.value)}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
               />
             </div>
           </div>
 
-          {pinError && <div className="text-xs font-bold text-red-600">{pinError}</div>}
+          {authFormError && <div className="text-xs font-bold text-red-600">{authFormError}</div>}
         </div>
       </form>
     </div>
