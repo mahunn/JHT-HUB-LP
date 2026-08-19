@@ -10,13 +10,29 @@ interface PixelTrackerProps {
 
 export default function PixelTracker({ metaPixelId, tiktokPixelId }: PixelTrackerProps) {
   useEffect(() => {
-    // Initial PageView for Meta
-    if (metaPixelId && typeof window !== 'undefined' && (window as any).fbq) {
-      (window as any).fbq('track', 'PageView');
+    // Initial PageView and ViewContent for Meta
+    if (metaPixelId && typeof window !== 'undefined') {
+      if ((window as any).fbq) {
+        (window as any).fbq('track', 'PageView');
+        (window as any).fbq('track', 'ViewContent', {
+          content_name: 'প্রিমিয়াম ১০ পিস আতর কম্বো',
+          content_category: 'Attar & Perfume',
+          value: 490,
+          currency: 'BDT',
+        });
+      }
     }
-    // Initial PageView for TikTok
-    if (tiktokPixelId && typeof window !== 'undefined' && (window as any).ttq) {
-      (window as any).ttq.page();
+    // Initial PageView and ViewContent for TikTok
+    if (tiktokPixelId && typeof window !== 'undefined') {
+      if ((window as any).ttq) {
+        (window as any).ttq.page();
+        (window as any).ttq.track('ViewContent', {
+          content_name: 'প্রিমিয়াম ১০ পিস আতর কম্বো',
+          content_category: 'Attar & Perfume',
+          value: 490,
+          currency: 'BDT',
+        });
+      }
     }
   }, [metaPixelId, tiktokPixelId]);
 

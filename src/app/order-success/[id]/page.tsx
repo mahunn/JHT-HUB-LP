@@ -37,6 +37,27 @@ export default function OrderSuccessPage() {
         if (data.success) {
           setOrder(data.order);
           setSettings(data.settings);
+
+          // Track Purchase event on success page
+          if (typeof window !== 'undefined') {
+            if ((window as any).fbq) {
+              (window as any).fbq('track', 'Purchase', {
+                content_name: data.order.selectedPackage?.banglaName || data.order.selectedPackage?.name,
+                content_type: 'product',
+                value: data.order.total,
+                currency: 'BDT',
+                num_items: data.order.quantity || 1,
+              });
+            }
+            if ((window as any).ttq) {
+              (window as any).ttq.track('CompletePayment', {
+                content_name: data.order.selectedPackage?.banglaName || data.order.selectedPackage?.name,
+                value: data.order.total,
+                currency: 'BDT',
+                quantity: data.order.quantity || 1,
+              });
+            }
+          }
         }
       } catch (err) {
         console.error(err);
