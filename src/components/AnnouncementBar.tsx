@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Clock } from 'lucide-react';
+import { Clock, Sparkles } from 'lucide-react';
 
 interface AnnouncementBarProps {
   text?: string;
@@ -10,7 +10,7 @@ interface AnnouncementBarProps {
 }
 
 export default function AnnouncementBar({
-  text = '🎉 আজই অর্ডার করলে সারা বাংলাদেশে ডেলিভারি সম্পূর্ণ ফ্রি!',
+  text = '🎉 ধামাকা অফার: আজই অর্ডার করলে সারা বাংলাদেশে ডেলিভারি সম্পূর্ণ ফ্রি!',
   active = true,
   countdownHours = 12,
 }: AnnouncementBarProps) {
@@ -42,13 +42,19 @@ export default function AnnouncementBar({
   const pad = (n: number) => n.toString().padStart(2, '0');
 
   return (
-    <div className="bg-emerald-800 text-white text-xs sm:text-sm py-2.5 px-4 sticky top-0 z-40">
-      <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
-        <span className="font-medium truncate">{text}</span>
+    <div className="bg-gradient-to-r from-emerald-900 via-emerald-800 to-emerald-900 text-white text-xs sm:text-sm py-2.5 px-4 sticky top-0 z-40 shadow-md animate-gradient relative overflow-hidden">
+      {/* Shimmer overlay */}
+      <div className="absolute inset-0 animate-shimmer pointer-events-none" />
 
-        <div className="flex items-center gap-1.5 text-[11px] font-semibold bg-white/10 px-2.5 py-1 rounded-md flex-shrink-0">
-          <Clock className="w-3 h-3 text-emerald-300" />
-          <span className="font-mono text-white tracking-wide">
+      <div className="max-w-5xl mx-auto flex items-center justify-between gap-3 relative z-10">
+        <span className="font-semibold truncate flex items-center gap-1.5">
+          <Sparkles className="w-3.5 h-3.5 text-amber-300 flex-shrink-0" />
+          {text}
+        </span>
+
+        <div className="flex items-center gap-1.5 text-[11px] font-bold bg-white/15 backdrop-blur-sm px-3 py-1.5 rounded-full flex-shrink-0 border border-white/10">
+          <Clock className="w-3 h-3 text-amber-300" />
+          <span className="font-mono text-white tracking-wider">
             {pad(timeLeft.hours)}:{pad(timeLeft.minutes)}:{pad(timeLeft.seconds)}
           </span>
         </div>

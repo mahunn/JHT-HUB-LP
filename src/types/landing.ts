@@ -105,8 +105,33 @@ export interface Order {
   updatedAt: string;
 }
 
+export type LeadStatus = 'abandoned' | 'contacted' | 'converted' | 'fake' | 'lost';
+
+export interface Lead {
+  id: string;
+  customerName?: string;
+  phone: string;
+  address?: string;
+  cityZone?: 'dhaka' | 'outside';
+  selectedPackage?: {
+    id: string;
+    name: string;
+    banglaName: string;
+    price: number;
+  };
+  quantity?: number;
+  status: LeadStatus;
+  notes?: string;
+  callCount?: number;
+  lastContactedAt?: string;
+  source?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface DatabaseSchema {
   product: ProductData;
   settings: StoreSettings;
   orders: Order[];
+  leads: Lead[];
 }

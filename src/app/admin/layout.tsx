@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   ShoppingCart,
+  PhoneCall,
   Sliders,
   Settings,
   ExternalLink,
@@ -26,6 +28,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [authError, setAuthError] = useState<string>('');
   const [checkingAuth, setCheckingAuth] = useState<boolean>(true);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
+  const [abandonedLeadsCount, setAbandonedLeadsCount] = useState<number>(0);
 
   useEffect(() => {
     // Check if session cookie exists
@@ -35,6 +38,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
     setCheckingAuth(false);
   }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      // Fetch leads count for badge
+      fetch('/api/leads')
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.leads) {
+            const count = data.leads.filter((l: any) => l.status === 'abandoned').length;
+            setAbandonedLeadsCount(count);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [isAuthenticated, pathname]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,11 +95,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-slate-900/90 border border-slate-800 rounded-3xl p-8 shadow-2xl backdrop-blur-xl text-center text-white">
-          <div className="w-16 h-16 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto mb-4 border border-emerald-500/30">
-            <Lock className="w-8 h-8" />
+          <div className="w-20 h-20 relative mx-auto mb-4 bg-white/10 rounded-2xl p-2 border border-white/10 flex items-center justify-center">
+            <Image
+              src="/logo.png"
+              alt="JHT HUB Logo"
+              width={64}
+              height={64}
+              className="object-contain"
+            />
           </div>
 
-          <h2 className="text-2xl font-extrabold mb-1">অ্যাডমিন প্যানেলে স্বাগতম</h2>
+          <h2 className="text-2xl font-extrabold mb-1">JHT HUB অ্যাডমিন প্যানেল</h2>
           <p className="text-sm text-slate-400 mb-6">প্রবেশ করতে আপনার সিকিউরিটি পিন দিন</p>
 
           <form onSubmit={handleLogin} className="space-y-4">
@@ -122,6 +146,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const navItems = [
     { label: 'ড্যাশবোর্ড (Overview)', href: '/admin', icon: LayoutDashboard },
     { label: 'অর্ডারসমূহ (Orders)', href: '/admin/orders', icon: ShoppingCart },
+    {
+      label: 'অসম্পূর্ণ লিড (Leads)',
+      href: '/admin/leads',
+      icon: PhoneCall,
+      badge: abandonedLeadsCount > 0 ? abandonedLeadsCount : undefined,
+    },
     { label: 'ল্যান্ডিং পেইজ এডিটর', href: '/admin/product', icon: Sliders },
     { label: 'সেটিংস ও পিক্সেল', href: '/admin/settings', icon: Settings },
   ];
@@ -130,9 +160,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="min-h-screen bg-slate-100 flex flex-col md:flex-row">
       {/* Mobile Top Header */}
       <div className="md:hidden bg-slate-900 text-white p-4 flex items-center justify-between shadow-md">
-        <div className="flex items-center gap-2 font-bold text-lg">
-          <Sparkles className="w-5 h-5 text-emerald-400" />
-          <span>Admin Hub</span>
+        <div className="flex items-center gap-2.5 font-bold text-lg">
+          <div className="w-8 h-8 relative rounded-lg overflow-hidden bg-white/10 p-0.5">
+            <Image src="/logo.png" alt="Logo" width={32} height={32} className="object-contain" />
+          </div>
+          <span>JHT HUB Admin</span>
         </div>
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -150,13 +182,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       >
         <div>
           {/* Logo / Header */}
-          <div className="hidden md:flex items-center gap-2.5 px-3 py-4 border-b border-slate-800 mb-6">
-            <div className="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center text-white shadow">
-              <Sparkles className="w-5 h-5" />
+          <div className="hidden md:flex items-center gap-3 px-3 py-4 border-b border-slate-800 mb-6">
+            <div className="w-10 h-10 rounded-xl bg-white/10 p-1 flex items-center justify-center shadow border border-white/10">
+              <Image
+                src="/logo.png"
+                alt="JHT HUB"
+                width={36}
+                height={36}
+                className="object-contain"
+              />
             </div>
             <div>
-              <h1 className="font-extrabold text-base leading-none">Admin Panel</h1>
-              <span className="text-[11px] text-emerald-400 font-medium">হালাল রেমিডি কন্ট্রোল</span>
+              <h1 className="font-extrabold text-base leading-none text-white tracking-wide">JHT HUB</h1>
+              <span className="text-[11px] text-emerald-400 font-medium">অ্যাডমিন কন্ট্রোল প্যানেল</span>
             </div>
           </div>
 
@@ -170,14 +208,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   key={item.href}
                   href={item.href}
                   onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-bold transition-colors ${
+                  className={`flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-bold transition-colors ${
                     isActive
                       ? 'bg-emerald-600 text-white shadow-md'
                       : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                   }`}
                 >
-                  <Icon className="w-5 h-5 flex-shrink-0" />
-                  <span>{item.label}</span>
+                  <div className="flex items-center gap-3">
+                    <Icon className="w-5 h-5 flex-shrink-0" />
+                    <span>{item.label}</span>
+                  </div>
+                  {item.badge !== undefined && (
+                    <span className="bg-red-500 text-white text-[11px] font-black px-2 py-0.5 rounded-full animate-pulse">
+                      {item.badge}
+                    </span>
+                  )}
                 </Link>
               );
             })}

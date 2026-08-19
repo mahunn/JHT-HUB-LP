@@ -14,19 +14,32 @@ import {
   Eye,
   Sliders,
   Settings,
+  PhoneCall,
+  UserCheck,
+  AlertCircle,
+  Package,
 } from 'lucide-react';
-import { Order, OrderStatus } from '@/types/landing';
+import { Order, OrderStatus, Lead } from '@/types/landing';
 
 export default function AdminDashboardPage() {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const fetchOrders = async () => {
+  const fetchData = async () => {
     try {
-      const res = await fetch('/api/orders');
-      const data = await res.json();
-      if (data.success) {
-        setOrders(data.orders);
+      const [resOrders, resLeads] = await Promise.all([
+        fetch('/api/orders'),
+        fetch('/api/leads'),
+      ]);
+      const dataOrders = await resOrders.json();
+      const dataLeads = await resLeads.json();
+
+      if (dataOrders.success) {
+        setOrders(dataOrders.orders);
+      }
+      if (dataLeads.success) {
+        setLeads(dataLeads.leads);
       }
     } catch (e) {
       console.error(e);
@@ -36,7 +49,7 @@ export default function AdminDashboardPage() {
   };
 
   useEffect(() => {
-    fetchOrders();
+    fetchData();
   }, []);
 
   const totalOrders = orders.length;
@@ -45,6 +58,7 @@ export default function AdminDashboardPage() {
   const confirmedOrders = orders.filter((o) => o.status === 'confirmed').length;
   const deliveredOrders = orders.filter((o) => o.status === 'delivered').length;
 
+  const abandonedLeads = leads.filter((l) => l.status === 'abandoned');
   const todayOrders = orders.filter((o) => {
     const orderDate = new Date(o.createdAt).toDateString();
     const today = new Date().toDateString();
@@ -69,21 +83,29 @@ export default function AdminDashboardPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-10">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900">ড্যাশবোর্ড ওভারভিউ</h1>
-          <p className="text-sm text-slate-500 font-medium">হালাল রেমিডি স্টোরের রিয়েল-টাইম পরিসংখ্যান</p>
+          <h1 className="text-2xl font-extrabold text-slate-900">JHT HUB ড্যাশবোর্ড</h1>
+          <p className="text-sm text-slate-500 font-medium">রিয়েল-টাইম সেলস, অর্ডার ও অসম্পূর্ণ লিড ট্র্যাকার</p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/admin/leads"
+            className="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-bold px-3.5 py-2.5 rounded-xl text-xs sm:text-sm transition-colors flex items-center gap-1.5"
+          >
+            <PhoneCall className="w-4 h-4 text-red-600" />
+            <span>কল লিস্ট ({abandonedLeads.length})</span>
+          </Link>
+
           <Link
             href="/admin/orders"
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm transition-colors shadow flex items-center gap-1.5"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs sm:text-sm transition-colors shadow flex items-center gap-1.5"
           >
             <ShoppingBag className="w-4 h-4" />
-            <span>সব অর্ডার দেখুন</span>
+            <span>সব অর্ডার ({totalOrders})</span>
           </Link>
         </div>
       </div>
@@ -117,30 +139,112 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
+        {/* Abandoned Leads / Calls */}
+        <Link
+          href="/admin/leads"
+          className="bg-white hover:bg-red-50/40 p-5 rounded-2xl border border-red-200 shadow-sm flex items-center justify-between transition-all group"
+        >
+          <div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-bold text-red-600 uppercase tracking-wider">কল প্রয়োজন (Leads)</span>
+              <span className="w-2 h-2 rounded-full bg-red-600 animate-ping" />
+            </div>
+            <h3 className="text-2xl font-extrabold text-red-600 mt-1 font-mono">{abandonedLeads.length}</h3>
+            <span className="text-xs text-red-700 font-medium group-hover:underline">দ্রুত কল দিন &rarr;</span>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-red-100 text-red-700 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <PhoneCall className="w-6 h-6" />
+          </div>
+        </Link>
+
         {/* Pending Orders */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">নতুন পেন্ডিং অর্ডার</span>
             <h3 className="text-2xl font-extrabold text-amber-600 mt-1 font-mono">{pendingOrders}</h3>
-            <span className="text-xs text-amber-700 font-medium">কল দিয়ে কনফার্ম করুন</span>
+            <span className="text-xs text-amber-700 font-medium">কনফার্মেশন বাকি</span>
           </div>
           <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
             <Clock className="w-6 h-6" />
           </div>
         </div>
+      </div>
 
-        {/* Delivered Orders */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-          <div>
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">সফল ডেলিভারি</span>
-            <h3 className="text-2xl font-extrabold text-emerald-700 mt-1 font-mono">{deliveredOrders}</h3>
-            <span className="text-xs text-slate-500 font-medium">কনফার্মড: {confirmedOrders}</span>
+      {/* Abandoned Leads Alert Box (If any exist) */}
+      {abandonedLeads.length > 0 && (
+        <div className="bg-gradient-to-r from-red-50 via-amber-50 to-orange-50 rounded-2xl border border-red-200 p-5 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-red-600 text-white flex items-center justify-center shadow">
+                <PhoneCall className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-extrabold text-slate-900">
+                  অসম্পূর্ণ গ্রাহক লিড ({abandonedLeads.length} টি বাকি)
+                </h3>
+                <p className="text-xs text-slate-600">
+                  এই গ্রাহকরা নাম্বার দিয়ে অর্ডার শেষ করেননি। কল বা হোয়াটসঅ্যাপ করে অর্ডার নিশ্চিত করুন।
+                </p>
+              </div>
+            </div>
+
+            <Link
+              href="/admin/leads"
+              className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition-colors shadow-sm self-start sm:self-auto"
+            >
+              সব লিড দেখুন ({leads.length})
+            </Link>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-            <CheckCircle2 className="w-6 h-6" />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {abandonedLeads.slice(0, 3).map((lead) => {
+              const cleanPhone = lead.phone.replace(/[^0-9]/g, '');
+              const whatsappNumber = cleanPhone.startsWith('88') ? cleanPhone : `88${cleanPhone}`;
+              const pkg = lead.selectedPackage?.banglaName || '১০ পিস আতর কম্বো';
+
+              return (
+                <div
+                  key={lead.id}
+                  className="bg-white rounded-xl p-3.5 border border-red-200/80 shadow-xs flex flex-col justify-between gap-2.5"
+                >
+                  <div>
+                    <div className="flex items-center justify-between text-[11px] text-slate-400">
+                      <span className="font-mono font-bold text-red-600">{lead.id}</span>
+                      <span>{new Date(lead.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                    <h4 className="font-bold text-slate-900 text-sm mt-0.5">
+                      {lead.customerName || 'কাস্টমার (নামহীন)'}
+                    </h4>
+                    <p className="text-xs font-mono font-bold text-emerald-700 mt-0.5">{lead.phone}</p>
+                    <p className="text-[11px] text-slate-500 truncate mt-1">প্যাকেজ: {pkg}</p>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 pt-2 border-t border-slate-100">
+                    <a
+                      href={`tel:${lead.phone}`}
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-1.5 px-2 rounded-lg flex items-center justify-center gap-1 transition-colors"
+                    >
+                      <Phone className="w-3.5 h-3.5" />
+                      <span>কল</span>
+                    </a>
+                    <a
+                      href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+                        `আসসালামু আলাইকুম ${lead.customerName || ''}, JHT HUB থেকে যোগাযোগ করছি। আপনার আতর কম্বো অর্ডারটি সম্পর্কে জানতে ফোন করা হয়েছিল।`
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-1.5 px-2 rounded-lg flex items-center justify-center gap-1 transition-colors"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5" />
+                      <span>WhatsApp</span>
+                    </a>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
-      </div>
+      )}
 
       {/* Quick Access Tiles */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

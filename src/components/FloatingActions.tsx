@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Phone, MessageCircle, ShoppingBag } from 'lucide-react';
+import { Phone, MessageCircle, ShoppingBag, ArrowUp } from 'lucide-react';
 import { StoreSettings } from '@/types/landing';
 
 interface FloatingActionsProps {
@@ -37,15 +37,15 @@ export default function FloatingActions({ settings }: FloatingActionsProps) {
 
   return (
     <>
-      {/* Desktop: minimal contact sidebar */}
-      <div className="hidden sm:flex fixed bottom-6 right-4 z-40 flex-col gap-2">
+      {/* Desktop: sleek contact sidebar */}
+      <div className="hidden sm:flex fixed bottom-6 right-4 z-40 flex-col gap-2.5">
         {settings.whatsappNumber && (
           <a
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
             title="WhatsApp"
-            className="w-11 h-11 rounded-full bg-green-500 hover:bg-green-600 text-white shadow-md flex items-center justify-center transition-colors"
+            className="w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg shadow-green-500/30 flex items-center justify-center transition-all duration-300 hover:scale-110"
           >
             <MessageCircle className="w-5 h-5" />
           </a>
@@ -55,24 +55,24 @@ export default function FloatingActions({ settings }: FloatingActionsProps) {
           <a
             href={telUrl}
             title="Call"
-            className="w-11 h-11 rounded-full bg-slate-700 hover:bg-slate-800 text-white shadow-md flex items-center justify-center transition-colors"
+            className="w-12 h-12 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 hover:from-slate-800 hover:to-slate-900 text-white shadow-lg shadow-slate-700/30 flex items-center justify-center transition-all duration-300 hover:scale-110"
           >
-            <Phone className="w-4 h-4" />
+            <Phone className="w-4.5 h-4.5" />
           </a>
         )}
       </div>
 
-      {/* Mobile: clean sticky bottom bar */}
+      {/* Mobile: premium sticky bottom bar */}
       <div
-        className={`sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 p-2.5 shadow-lg transition-transform duration-300 ${
-          showBottomBar ? 'translate-y-0' : 'translate-y-full'
+        className={`sm:hidden fixed bottom-0 left-0 right-0 z-50 glass-dark border-t border-white/10 p-3 shadow-2xl transition-all duration-500 ${
+          showBottomBar ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'
         }`}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           {settings.hotlinePhone && (
             <a
               href={telUrl}
-              className="px-3 py-2.5 rounded-lg bg-slate-100 text-slate-700 font-semibold text-xs flex items-center gap-1.5 flex-shrink-0"
+              className="px-4 py-3 rounded-xl bg-white/10 backdrop-blur-sm text-white font-bold text-xs flex items-center gap-1.5 flex-shrink-0 border border-white/10 hover:bg-white/15 transition-colors"
             >
               <Phone className="w-3.5 h-3.5" />
               <span>কল</span>
@@ -81,7 +81,7 @@ export default function FloatingActions({ settings }: FloatingActionsProps) {
 
           <button
             onClick={scrollToOrder}
-            className="flex-1 bg-emerald-700 hover:bg-emerald-800 active:bg-emerald-900 text-white font-bold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors"
+            className="flex-1 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white font-extrabold py-3 px-4 rounded-xl flex items-center justify-center gap-2 text-sm transition-all shadow-lg shadow-emerald-600/30"
           >
             <ShoppingBag className="w-4 h-4" />
             <span>অর্ডার করুন</span>

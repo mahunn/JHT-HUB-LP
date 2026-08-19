@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { DatabaseSchema, ProductData, StoreSettings, Order } from '@/types/landing';
+import { DatabaseSchema, ProductData, StoreSettings, Order, Lead, LeadStatus } from '@/types/landing';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
@@ -120,6 +120,27 @@ const DEFAULT_DB: DatabaseSchema = {
       createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
       updatedAt: new Date(Date.now() - 3600000 * 2).toISOString()
     }
+  ],
+  leads: [
+    {
+      id: 'LD-1001',
+      customerName: 'তানভীর আহমেদ',
+      phone: '01819876543',
+      address: 'উত্তরা সেক্টর ৭, ঢাকা',
+      cityZone: 'dhaka',
+      selectedPackage: {
+        id: 'combo-10',
+        name: '10 Pcs Attar Combo',
+        banglaName: 'আতর কম্বো (১০ পিস)',
+        price: 490
+      },
+      quantity: 1,
+      status: 'abandoned',
+      notes: 'নাম্বার দেওয়ার পর ব্যাক করেছে, কল দিয়ে কনফার্ম করুন',
+      callCount: 0,
+      createdAt: new Date(Date.now() - 3600000 * 5).toISOString(),
+      updatedAt: new Date(Date.now() - 3600000 * 5).toISOString()
+    }
   ]
 };
 
@@ -141,7 +162,8 @@ export function getDb(): DatabaseSchema {
     return {
       product: { ...DEFAULT_DB.product, ...(data.product || {}) },
       settings: { ...DEFAULT_DB.settings, ...(data.settings || {}) },
-      orders: data.orders || []
+      orders: data.orders || [],
+      leads: data.leads || []
     };
   } catch (error) {
     console.error('Error reading db.json, returning default DB', error);
@@ -176,6 +198,8 @@ export function updateSettings(settings: Partial<StoreSettings>): StoreSettings 
   return db.settings;
 }
 
+// ----------------- ORDERS -----------------
+
 export function getOrders(): Order[] {
   return getDb().orders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
@@ -195,6 +219,19 @@ export function createOrder(orderInput: Omit<Order, 'id' | 'createdAt' | 'update
     updatedAt: new Date().toISOString()
   };
   db.orders.unshift(newOrder);
+
+  // Automatically update any matching lead to 'converted'
+  const cleanPhone = orderInput.phone.replace(/[^0-9]/g, '');
+  db.leads = db.leads || [];
+  db.leads.forEach((l) => {
+    const leadCleanPhone = l.phone.replace(/[^0-9]/g, '');
+    if (leadCleanPhone === cleanPhone || (leadCleanPhone.slice(-10) === cleanPhone.slice(-10) && cleanPhone.length >= 10)) {
+      l.status = 'converted';
+      l.notes = (l.notes ? l.notes + ' | ' : '') + `অর্ডার কনফার্মড (#${newOrder.id})`;
+      l.updatedAt = new Date().toISOString();
+    }
+  });
+
   saveDb(db);
   return newOrder;
 }
@@ -214,6 +251,144 @@ export function deleteOrder(id: string): boolean {
   const initialLength = db.orders.length;
   db.orders = db.orders.filter((o) => o.id !== id);
   if (db.orders.length !== initialLength) {
+    saveDb(db);
+    return true;
+  }
+  return false;
+}
+
+// ----------------- LEADS (Abandoned / Incomplete Checkouts) -----------------
+
+export function getLeads(): Lead[] {
+  const db = getDb();
+  return (db.leads || []).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
+export function getLeadById(id: string): Lead | undefined {
+  const db = getDb();
+  return (db.leads || []).find((l) => l.id === id);
+}
+
+export function createOrUpdateLead(leadInput: {
+  phone: string;
+  customerName?: string;
+  address?: string;
+  cityZone?: 'dhaka' | 'outside';
+  selectedPackage?: {
+    id: string;
+    name: string;
+    banglaName: string;
+    price: number;
+  };
+  quantity?: number;
+  source?: string;
+  notes?: string;
+}): { lead: Lead; isNew: boolean } {
+  const db = getDb();
+  db.leads = db.leads || [];
+
+  const cleanPhone = (leadInput.phone || '').replace(/[^0-9]/g, '');
+  if (!cleanPhone || cleanPhone.length < 10) {
+    throw new Error('Valid phone number with at least 10 digits is required');
+  }
+
+  // Check if customer already placed an order recently with this phone
+  const existingOrder = db.orders.find(
+    (o) => o.phone.replace(/[^0-9]/g, '') === cleanPhone || o.phone.replace(/[^0-9]/g, '').slice(-10) === cleanPhone.slice(-10)
+  );
+
+  // Check for existing lead with same phone
+  const existingIndex = db.leads.findIndex((l) => {
+    const p = l.phone.replace(/[^0-9]/g, '');
+    return p === cleanPhone || (p.length >= 10 && p.slice(-10) === cleanPhone.slice(-10));
+  });
+
+  if (existingIndex !== -1) {
+    const existing = db.leads[existingIndex];
+    const updated: Lead = {
+      ...existing,
+      customerName: leadInput.customerName?.trim() || existing.customerName,
+      address: leadInput.address?.trim() || existing.address,
+      cityZone: leadInput.cityZone || existing.cityZone,
+      selectedPackage: leadInput.selectedPackage || existing.selectedPackage,
+      quantity: leadInput.quantity || existing.quantity || 1,
+      source: leadInput.source || existing.source || 'checkout_form',
+      notes: leadInput.notes || existing.notes,
+      status: existingOrder ? 'converted' : existing.status,
+      updatedAt: new Date().toISOString()
+    };
+    db.leads[existingIndex] = updated;
+    saveDb(db);
+    return { lead: updated, isNew: false };
+  }
+
+  const nextNum = 1000 + db.leads.length + 1;
+  const newLead: Lead = {
+    id: `LD-${nextNum}`,
+    phone: cleanPhone,
+    customerName: leadInput.customerName?.trim() || '',
+    address: leadInput.address?.trim() || '',
+    cityZone: leadInput.cityZone,
+    selectedPackage: leadInput.selectedPackage,
+    quantity: leadInput.quantity || 1,
+    status: existingOrder ? 'converted' : 'abandoned',
+    notes: leadInput.notes || '',
+    callCount: 0,
+    source: leadInput.source || 'checkout_form',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  db.leads.unshift(newLead);
+  saveDb(db);
+  return { lead: newLead, isNew: true };
+}
+
+export function updateLead(
+  id: string,
+  updates: Partial<Pick<Lead, 'status' | 'notes' | 'callCount' | 'customerName' | 'address' | 'cityZone'>>
+): Lead | null {
+  const db = getDb();
+  db.leads = db.leads || [];
+  const index = db.leads.findIndex((l) => l.id === id);
+  if (index === -1) return null;
+
+  db.leads[index] = {
+    ...db.leads[index],
+    ...updates,
+    updatedAt: new Date().toISOString()
+  };
+  saveDb(db);
+  return db.leads[index];
+}
+
+export function recordLeadCall(id: string, notes?: string): Lead | null {
+  const db = getDb();
+  db.leads = db.leads || [];
+  const index = db.leads.findIndex((l) => l.id === id);
+  if (index === -1) return null;
+
+  const current = db.leads[index];
+  const newCallCount = (current.callCount || 0) + 1;
+  
+  db.leads[index] = {
+    ...current,
+    callCount: newCallCount,
+    lastContactedAt: new Date().toISOString(),
+    status: current.status === 'abandoned' ? 'contacted' : current.status,
+    notes: notes !== undefined ? notes : current.notes,
+    updatedAt: new Date().toISOString()
+  };
+  saveDb(db);
+  return db.leads[index];
+}
+
+export function deleteLead(id: string): boolean {
+  const db = getDb();
+  db.leads = db.leads || [];
+  const initialLength = db.leads.length;
+  db.leads = db.leads.filter((l) => l.id !== id);
+  if (db.leads.length !== initialLength) {
     saveDb(db);
     return true;
   }

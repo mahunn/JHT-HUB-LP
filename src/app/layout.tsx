@@ -12,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: `${product.productName} - ${settings.storeName}`,
     description: `${product.headlinePre} ${product.headlineHighlight}! ${product.headlinePost}`,
-    keywords: ['আতর কম্বো', 'Halal Remedy', 'Attar Combo', 'Perfume Combo', 'Islamic Perfume Bangladesh', 'হালাল পারফিউম'],
+    keywords: ['আতর কম্বো', 'JHT HUB', 'Attar Combo', 'Perfume Combo', 'Islamic Perfume Bangladesh', 'হালাল পারফিউম'],
     openGraph: {
       title: product.productName,
       description: `${product.headlinePre} ${product.headlineHighlight}! ${product.freeDeliveryHeadline}`,
