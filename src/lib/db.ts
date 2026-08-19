@@ -220,16 +220,12 @@ export function createOrder(orderInput: Omit<Order, 'id' | 'createdAt' | 'update
   };
   db.orders.unshift(newOrder);
 
-  // Automatically update any matching lead to 'converted'
+  // Automatically remove matching lead from leads list since order is now completed
   const cleanPhone = orderInput.phone.replace(/[^0-9]/g, '');
-  db.leads = db.leads || [];
-  db.leads.forEach((l) => {
+  db.leads = (db.leads || []).filter((l) => {
     const leadCleanPhone = l.phone.replace(/[^0-9]/g, '');
-    if (leadCleanPhone === cleanPhone || (leadCleanPhone.slice(-10) === cleanPhone.slice(-10) && cleanPhone.length >= 10)) {
-      l.status = 'converted';
-      l.notes = (l.notes ? l.notes + ' | ' : '') + `অর্ডার কনফার্মড (#${newOrder.id})`;
-      l.updatedAt = new Date().toISOString();
-    }
+    const isMatch = leadCleanPhone === cleanPhone || (cleanPhone.length >= 10 && leadCleanPhone.slice(-10) === cleanPhone.slice(-10));
+    return !isMatch;
   });
 
   saveDb(db);
@@ -257,11 +253,17 @@ export function deleteOrder(id: string): boolean {
   return false;
 }
 
-// ----------------- LEADS (Abandoned / Incomplete Checkouts) -----------------
+// ----------------- LEADS (Abandoned / Incomplete Checkouts ONLY) -----------------
 
 export function getLeads(): Lead[] {
   const db = getDb();
-  return (db.leads || []).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const orderPhones = new Set(db.orders.map((o) => o.phone.replace(/[^0-9]/g, '').slice(-10)));
+  return (db.leads || [])
+    .filter((l) => {
+      const leadPhone = l.phone.replace(/[^0-9]/g, '').slice(-10);
+      return !orderPhones.has(leadPhone) && l.status !== 'converted';
+    })
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
 export function getLeadById(id: string): Lead | undefined {
@@ -283,7 +285,7 @@ export function createOrUpdateLead(leadInput: {
   quantity?: number;
   source?: string;
   notes?: string;
-}): { lead: Lead; isNew: boolean } {
+}): { lead: Lead | null; isNew: boolean } {
   const db = getDb();
   db.leads = db.leads || [];
 
@@ -292,10 +294,24 @@ export function createOrUpdateLead(leadInput: {
     throw new Error('Valid phone number with at least 10 digits is required');
   }
 
-  // Check if customer already placed an order recently with this phone
-  const existingOrder = db.orders.find(
-    (o) => o.phone.replace(/[^0-9]/g, '') === cleanPhone || o.phone.replace(/[^0-9]/g, '').slice(-10) === cleanPhone.slice(-10)
-  );
+  // Check if customer already placed an order with this phone - if so, do NOT create/keep a lead
+  const hasCompletedOrder = db.orders.some((o) => {
+    const orderPhone = o.phone.replace(/[^0-9]/g, '');
+    return orderPhone === cleanPhone || (orderPhone.slice(-10) === cleanPhone.slice(-10) && cleanPhone.length >= 10);
+  });
+
+  if (hasCompletedOrder) {
+    // Remove any existing lead with this phone number as they already have a completed order
+    const initialLen = db.leads.length;
+    db.leads = db.leads.filter((l) => {
+      const p = l.phone.replace(/[^0-9]/g, '');
+      return !(p === cleanPhone || (p.slice(-10) === cleanPhone.slice(-10) && cleanPhone.length >= 10));
+    });
+    if (db.leads.length !== initialLen) {
+      saveDb(db);
+    }
+    return { lead: null, isNew: false };
+  }
 
   // Check for existing lead with same phone
   const existingIndex = db.leads.findIndex((l) => {
@@ -314,7 +330,6 @@ export function createOrUpdateLead(leadInput: {
       quantity: leadInput.quantity || existing.quantity || 1,
       source: leadInput.source || existing.source || 'checkout_form',
       notes: leadInput.notes || existing.notes,
-      status: existingOrder ? 'converted' : existing.status,
       updatedAt: new Date().toISOString()
     };
     db.leads[existingIndex] = updated;
@@ -331,7 +346,7 @@ export function createOrUpdateLead(leadInput: {
     cityZone: leadInput.cityZone,
     selectedPackage: leadInput.selectedPackage,
     quantity: leadInput.quantity || 1,
-    status: existingOrder ? 'converted' : 'abandoned',
+    status: 'abandoned',
     notes: leadInput.notes || '',
     callCount: 0,
     source: leadInput.source || 'checkout_form',

@@ -170,10 +170,10 @@ export default function AdminLeadsPage() {
       const data = await res.json();
 
       if (data.success) {
-        // Update lead status to converted
-        await handleStatusChange(lead.id, 'converted');
+        // Remove lead from local state since it is now an active order
+        setLeads((prev) => prev.filter((l) => l.id !== lead.id));
         setConvertingLead(null);
-        showToast(`🎉 অভিনন্দন! অর্ডার তৈরি হয়েছে: #${data.order.id}`);
+        showToast(`🎉 অভিনন্দন! অর্ডার তৈরি হয়েছে: #${data.order.id} (লিড সফলভাবে অর্ডারে স্থানান্তরিত হয়েছে)`);
       } else {
         alert(data.error || 'অর্ডার তৈরিতে সমস্যা হয়েছে।');
       }
@@ -222,7 +222,12 @@ export default function AdminLeadsPage() {
       (lead.address && lead.address.toLowerCase().includes(q)) ||
       (lead.selectedPackage && lead.selectedPackage.banglaName.toLowerCase().includes(q));
 
-    const matchesStatus = statusFilter === 'all' || lead.status === statusFilter;
+    const matchesStatus =
+      statusFilter === 'all'
+        ? true
+        : statusFilter === 'lost_or_fake'
+        ? lead.status === 'lost' || lead.status === 'fake'
+        : lead.status === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
@@ -230,8 +235,7 @@ export default function AdminLeadsPage() {
   // Counters
   const abandonedCount = leads.filter((l) => l.status === 'abandoned').length;
   const contactedCount = leads.filter((l) => l.status === 'contacted').length;
-  const convertedCount = leads.filter((l) => l.status === 'converted').length;
-  const lostCount = leads.filter((l) => l.status === 'lost' || l.status === 'fake').length;
+  const lostOrFakeCount = leads.filter((l) => l.status === 'lost' || l.status === 'fake').length;
 
   const getStatusBadge = (status: LeadStatus) => {
     switch (status) {
@@ -239,25 +243,18 @@ export default function AdminLeadsPage() {
         return (
           <span className="inline-flex items-center gap-1 bg-red-100 text-red-800 font-bold px-2.5 py-1 rounded-full text-xs border border-red-200">
             <span className="w-2 h-2 rounded-full bg-red-600 animate-ping" />
-            কল প্রয়োজন (অসম্পূর্ণ)
+            কল প্রয়োজন (নতুন)
           </span>
         );
       case 'contacted':
         return (
           <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-800 font-bold px-2.5 py-1 rounded-full text-xs border border-amber-200">
             <Clock className="w-3 h-3" />
-            কল করা হয়েছে
-          </span>
-        );
-      case 'converted':
-        return (
-          <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-full text-xs border border-emerald-200">
-            <CheckCircle2 className="w-3 h-3" />
-            অর্ডার সম্পন্ন (Converted)
+            কথা বলা হয়েছে
           </span>
         );
       case 'lost':
-        return <span className="bg-slate-200 text-slate-700 font-bold px-2.5 py-1 rounded-full text-xs">ইন্টারেস্টেড না (Lost)</span>;
+        return <span className="bg-slate-200 text-slate-700 font-bold px-2.5 py-1 rounded-full text-xs">আগ্রহী নয় (Lost)</span>;
       case 'fake':
         return <span className="bg-rose-100 text-rose-800 font-bold px-2.5 py-1 rounded-full text-xs">ভুল / ফেক নাম্বার</span>;
       default:
@@ -285,7 +282,7 @@ export default function AdminLeadsPage() {
             </span>
           </div>
           <p className="text-sm text-slate-500 mt-1 font-medium">
-            যারা ফোন নাম্বার দিয়ে অর্ডার শেষ না করে চলে গেছেন, তাদের সরাসরি কল বা হোয়াটসঅ্যাপ করে কনফার্ম করুন।
+            যারা ফোন নাম্বার দিয়ে অর্ডার শেষ না করে চলে গেছেন, তাদের সরাসরি কল বা হোয়াটসঅ্যাপ করে অর্ডার নিশ্চিত করুন।
           </p>
         </div>
 
@@ -321,7 +318,7 @@ export default function AdminLeadsPage() {
               : 'bg-white text-slate-800 border-slate-200 hover:border-slate-300'
           }`}
         >
-          <span className="text-xs font-bold opacity-80 uppercase tracking-wider block">মোট লিড</span>
+          <span className="text-xs font-bold opacity-80 uppercase tracking-wider block">মোট অসম্পূর্ণ লিড</span>
           <span className="text-2xl font-black mt-1 block">{leads.length}</span>
         </button>
 
@@ -334,7 +331,7 @@ export default function AdminLeadsPage() {
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider block">কল প্রয়োজন</span>
+            <span className="text-xs font-bold uppercase tracking-wider block">নতুন কল প্রয়োজন</span>
             <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
           </div>
           <span className="text-2xl font-black mt-1 block text-red-600">{abandonedCount}</span>
@@ -353,15 +350,15 @@ export default function AdminLeadsPage() {
         </button>
 
         <button
-          onClick={() => setStatusFilter('converted')}
+          onClick={() => setStatusFilter('lost_or_fake')}
           className={`p-4 rounded-2xl border text-left transition-all ${
-            statusFilter === 'converted'
-              ? 'bg-emerald-600 text-white border-emerald-600 shadow-md'
-              : 'bg-white text-slate-800 border-slate-200 hover:border-emerald-200'
+            statusFilter === 'lost_or_fake'
+              ? 'bg-slate-700 text-white border-slate-700 shadow-md'
+              : 'bg-white text-slate-800 border-slate-200 hover:border-slate-300'
           }`}
         >
-          <span className="text-xs font-bold opacity-80 uppercase tracking-wider block">অর্ডারে কনভার্ট</span>
-          <span className="text-2xl font-black mt-1 block text-emerald-600">{convertedCount}</span>
+          <span className="text-xs font-bold opacity-80 uppercase tracking-wider block">আগ্রহী নয় / ফেক</span>
+          <span className="text-2xl font-black mt-1 block text-slate-600">{lostOrFakeCount}</span>
         </button>
       </div>
 
@@ -385,12 +382,10 @@ export default function AdminLeadsPage() {
             onChange={(e) => setStatusFilter(e.target.value)}
             className="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500"
           >
-            <option value="all">সব স্ট্যাটাস ({leads.length})</option>
+            <option value="all">সব অসম্পূর্ণ লিড ({leads.length})</option>
             <option value="abandoned">🔴 কল প্রয়োজন ({abandonedCount})</option>
-            <option value="contacted">🟡 কল করা হয়েছে ({contactedCount})</option>
-            <option value="converted">🟢 কনভার্ট হয়েছে ({convertedCount})</option>
-            <option value="lost">⚪ হারিয়ে গেছে (Lost)</option>
-            <option value="fake">🚫 ফেক / ভুল নাম্বার</option>
+            <option value="contacted">🟡 কথা বলা হয়েছে ({contactedCount})</option>
+            <option value="lost_or_fake">⚪ আগ্রহী নয় / ফেক ({lostOrFakeCount})</option>
           </select>
         </div>
       </div>
@@ -581,11 +576,10 @@ export default function AdminLeadsPage() {
                         onChange={(e) => handleStatusChange(lead.id, e.target.value as LeadStatus)}
                         className="text-xs bg-slate-100 border border-slate-200 rounded-lg px-2.5 py-1.5 font-semibold text-slate-700 focus:outline-none"
                       >
-                        <option value="abandoned">🔴 কল প্রয়োজন</option>
-                        <option value="contacted">🟡 কল করা হয়েছে</option>
-                        <option value="converted">🟢 অর্ডার সম্পন্ন</option>
-                        <option value="lost">⚪ Lost</option>
-                        <option value="fake">🚫 Fake / ভুল</option>
+                        <option value="abandoned">🔴 কল প্রয়োজন (নতুন)</option>
+                        <option value="contacted">🟡 কথা বলা হয়েছে</option>
+                        <option value="lost">⚪ আগ্রহী নয় (Lost)</option>
+                        <option value="fake">🚫 ভুল / ফেক নাম্বার</option>
                       </select>
 
                       {/* Delete */}

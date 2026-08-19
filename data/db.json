@@ -161,13 +161,11 @@
     "announcementText": "🎉 ধামাকা অফার: আজই অর্ডার করলে সারা বাংলাদেশে ক্যাশ অন ডেলিভারি সম্পূর্ণ ফ্রি!",
     "announcementActive": true
   },
-  "orders": [],
-  "leads": [
+  "orders": [
     {
-      "id": "LD-1003",
-      "phone": "01999887766",
-      "customerName": "Test Lead",
-      "address": "",
+      "customerName": "Karim Uddin",
+      "phone": "01788776655",
+      "address": "Dhanmondi, Dhaka",
       "cityZone": "dhaka",
       "selectedPackage": {
         "id": "combo-10",
@@ -176,52 +174,15 @@
         "price": 490
       },
       "quantity": 1,
-      "status": "abandoned",
+      "subtotal": 490,
+      "deliveryCharge": 0,
+      "total": 490,
       "notes": "",
-      "callCount": 0,
-      "source": "checkout_form",
-      "createdAt": "2026-08-19T08:05:11.649Z",
-      "updatedAt": "2026-08-19T08:05:21.295Z"
-    },
-    {
-      "id": "LD-1002",
-      "phone": "01828034555",
-      "customerName": "Arafat Rahman",
-      "address": "trte wgwg, ejwg",
-      "cityZone": "dhaka",
-      "selectedPackage": {
-        "id": "combo-10",
-        "name": "10 Pcs Attar Combo",
-        "banglaName": "আতর কম্বো (১০ পিস)",
-        "price": 490
-      },
-      "quantity": 1,
-      "status": "converted",
-      "notes": "অর্ডার কনফার্মড (#HR-1003)",
-      "callCount": 0,
-      "source": "checkout_form",
-      "createdAt": "2026-08-19T07:56:17.153Z",
-      "updatedAt": "2026-08-19T07:56:31.128Z"
-    },
-    {
-      "id": "LD-1001",
-      "customerName": "তানভীর আহমেদ",
-      "phone": "01819876543",
-      "address": "উত্তরা সেক্টর ৭, ঢাকা",
-      "cityZone": "dhaka",
-      "selectedPackage": {
-        "id": "combo-10",
-        "name": "10 Pcs Attar Combo",
-        "banglaName": "আতর কম্বো (১০ পিস)",
-        "price": 490
-      },
-      "quantity": 1,
-      "status": "abandoned",
-      "notes": "নাম্বার দেওয়ার পর ব্যাক করেছে, দ্রুত কল দিন",
-      "callCount": 0,
-      "source": "checkout_form",
-      "createdAt": "2026-08-19T11:30:00.000Z",
-      "updatedAt": "2026-08-19T11:30:00.000Z"
+      "id": "HR-1001",
+      "status": "pending",
+      "createdAt": "2026-08-19T09:08:58.366Z",
+      "updatedAt": "2026-08-19T09:08:58.366Z"
     }
-  ]
+  ],
+  "leads": []
 }
