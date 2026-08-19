@@ -1,9 +1,15 @@
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 import { DatabaseSchema, ProductData, StoreSettings, Order, Lead, LeadStatus } from '@/types/landing';
 
-const DATA_DIR = path.join(process.cwd(), 'data');
-const DB_FILE = path.join(DATA_DIR, 'db.json');
+const LOCAL_DATA_DIR = path.join(process.cwd(), 'data');
+const LOCAL_DB_FILE = path.join(LOCAL_DATA_DIR, 'db.json');
+const TMP_DATA_DIR = typeof os.tmpdir === 'function' ? os.tmpdir() : '/tmp';
+const TMP_DB_FILE = path.join(TMP_DATA_DIR, 'jht_db.json');
+
+// In-memory cache for serverless environments
+let memoryDb: DatabaseSchema | null = null;
 
 const DEFAULT_DB: DatabaseSchema = {
   product: {
@@ -68,15 +74,20 @@ const DEFAULT_DB: DatabaseSchema = {
       { id: 'sc-1', name: 'ইরানি বাখুর', category: 'arabian', notes: 'ঐতিহ্যবাহী মিষ্টি ও মোহনীয় বাখুর নোট' },
       { id: 'sc-2', name: 'সুলতান', category: 'arabian', notes: 'রাজকীয় স্পাইসি ও উডি সুবাস' },
       { id: 'sc-3', name: 'এহেসাস আল আরাবিয়া', category: 'arabian', notes: 'মন জুড়ানো মিষ্টি এরাবিয়ান ব্লেন্ড' },
-      { id: 'sc-4', name: 'বাকারাত রোজ', category: 'arabian', notes: 'অপূর্ব ফ্রেশ রোজ ও অ্যাম্বার ফিল' },
-      { id: 'sc-5', name: 'আমীর আল উদ', category: 'arabian', notes: 'গাঢ় ও নিখাদ আভিজাত্যের উদ সুবাস' },
-      { id: 'sc-6', name: 'ভ্যাম্পায়ার ব্লাড', category: 'perfume', notes: 'অত্যন্ত আকর্ষণীয় ও আধুনিক সিগনেচার সুবাস' },
-      { id: 'sc-7', name: 'ক্রিড এভেন্টাস', category: 'perfume', notes: 'বিশ্বখ্যাত ফ্রেশ ফ্রুটি ও স্মোকি পারফিউম নোট' },
-      { id: 'sc-8', name: 'কুল ওয়াটার', category: 'perfume', notes: 'তীব্র সতেজ অ্যাকোয়াটিক ফ্রেশনেস' },
-      { id: 'sc-9', name: 'ডানহিল আইকন', category: 'perfume', notes: 'ক্লাসিক জেন্টলম্যান রিচ ফ্লেভার' },
-      { id: 'sc-10', name: 'ওয়াই এস এল ল্যাকো', category: 'perfume', notes: 'স্পোর্টি, ভাইব্র্যান্ট ও আকর্ষণীয়' }
+      { id: 'sc-4', name: 'জান্নাতুল ফেরদৌস', category: 'arabian', notes: 'চিরচেনা ক্লাসিক জান্নাতুল ফেরদাউসের সুবাস' },
+      { id: 'sc-5', name: 'আমির আল উদ', category: 'arabian', notes: 'গাঢ় ও দীর্ঘস্থায়ী প্রিমিয়াম উদ নোট' },
+      { id: 'sc-6', name: 'সিলভার ড্রপ', category: 'perfume', notes: 'সতেজ ও ফ্রেশ অ্যাকোয়াটিক পারফিউম ফিল' },
+      { id: 'sc-7', name: 'কুল ওয়াটার', category: 'perfume', notes: 'ঠাণ্ডা রিফ্রেশিং সামার স্পেশাল নোট' },
+      { id: 'sc-8', name: 'হোয়াইট কস্তুরী', category: 'perfume', notes: 'নরম, মোলায়েম ও দীর্ঘস্থায়ী হোয়াইট মাস্ক' },
+      { id: 'sc-9', name: 'চকলেট মাস্ক', category: 'perfume', notes: 'চকলেট ও ভ্যানিলার মিষ্টি মেলবন্ধন' },
+      { id: 'sc-10', name: 'ডানহিল ডিজায়ার', category: 'perfume', notes: 'আধুনিক লাক্সারি সিগনেচার সুবাস' }
     ],
-    features: [],
+    features: [
+      { id: 'ft-1', title: '১০০% অ্যালকোহল ও কেমিক্যাল মুক্ত', description: 'সম্পূর্ণ হালাল উপায়ে প্রাকৃতিক এসেন্স দিয়ে প্রস্তুতকৃত।' },
+      { id: 'ft-2', title: '১২+ ঘণ্টা লং লাস্টিং সুবাস', description: 'কাপড়ে ব্যবহারে সারা দিনব্যাপী থাকবে চমৎকার সুবাস।' },
+      { id: 'ft-3', title: '১০টি আকর্ষণীয় ফ্লেভার', description: 'এরাবিয়ান এবং আধুনিক পারফিউম টোনের সেরা কালেকশন।' },
+      { id: 'ft-4', title: 'পকেট সাইজ ও সহজে বহনযোগ্য', description: '৩ মিলি রোলাক কাঁচের বোতল, পকেটে নিয়ে ঘুরতে সুবিধা।' }
+    ],
     trustBadges: [
       { id: 'tb-1', title: 'অগ্রিম কোনো টাকা লাগছে না', description: 'ফুল ক্যাশ অন ডেলিভারিতে নিতে পারবেন। পণ্য পেয়ে মূল্য দিন।', iconName: 'Banknote' },
       { id: 'tb-2', title: 'চেক করে নেওয়ার শতভাগ সুবিধা', description: 'ডেলিভারি ম্যানের সামনে চেক করে দেখুন। পছন্দ না হলে রিটার্ন করে দিন।', iconName: 'CheckCircle2' },
@@ -97,82 +108,79 @@ const DEFAULT_DB: DatabaseSchema = {
     announcementText: '🎉 ধামাকা অফার: আজই অর্ডার করলে সারা বাংলাদেশে ক্যাশ অন ডেলিভারি সম্পূর্ণ ফ্রি!',
     announcementActive: true
   },
-  orders: [
-    {
-      id: 'HR-1001',
-      customerName: 'মোঃ জাহিদ হাসান',
-      phone: '01712345678',
-      address: 'বাড়ি ১২, রোড ৪, ব্লক সি, বনশ্রী, ঢাকা',
-      cityZone: 'dhaka',
-      selectedPackage: {
-        id: 'combo-10',
-        name: '10 Pcs Attar Combo',
-        banglaName: 'আতর কম্বো (১০ পিস)',
-        price: 490
-      },
-      quantity: 1,
-      subtotal: 490,
-      deliveryCharge: 0,
-      total: 490,
-      notes: 'অফিসের ঠিকানায় ডেলিভারি দিবেন।',
-      status: 'pending',
-      createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-      updatedAt: new Date(Date.now() - 3600000 * 2).toISOString()
-    }
-  ],
-  leads: [
-    {
-      id: 'LD-1001',
-      customerName: 'তানভীর আহমেদ',
-      phone: '01819876543',
-      address: 'উত্তরা সেক্টর ৭, ঢাকা',
-      cityZone: 'dhaka',
-      selectedPackage: {
-        id: 'combo-10',
-        name: '10 Pcs Attar Combo',
-        banglaName: 'আতর কম্বো (১০ পিস)',
-        price: 490
-      },
-      quantity: 1,
-      status: 'abandoned',
-      notes: 'নাম্বার দেওয়ার পর ব্যাক করেছে, কল দিয়ে কনফার্ম করুন',
-      callCount: 0,
-      createdAt: new Date(Date.now() - 3600000 * 5).toISOString(),
-      updatedAt: new Date(Date.now() - 3600000 * 5).toISOString()
-    }
-  ]
+  orders: [],
+  leads: []
 };
 
-function ensureDataDir() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
-}
-
 export function getDb(): DatabaseSchema {
-  ensureDataDir();
-  if (!fs.existsSync(DB_FILE)) {
-    saveDb(DEFAULT_DB);
-    return DEFAULT_DB;
+  if (memoryDb) {
+    return memoryDb;
   }
+
+  // 1. Try reading from TMP_DB_FILE (serverless cache)
   try {
-    const raw = fs.readFileSync(DB_FILE, 'utf-8');
-    const data = JSON.parse(raw);
-    return {
-      product: { ...DEFAULT_DB.product, ...(data.product || {}) },
-      settings: { ...DEFAULT_DB.settings, ...(data.settings || {}) },
-      orders: data.orders || [],
-      leads: data.leads || []
-    };
-  } catch (error) {
-    console.error('Error reading db.json, returning default DB', error);
-    return DEFAULT_DB;
+    if (fs.existsSync(TMP_DB_FILE)) {
+      const raw = fs.readFileSync(TMP_DB_FILE, 'utf-8');
+      const data = JSON.parse(raw);
+      memoryDb = {
+        product: { ...DEFAULT_DB.product, ...(data.product || {}) },
+        settings: { ...DEFAULT_DB.settings, ...(data.settings || {}) },
+        orders: data.orders || [],
+        leads: data.leads || []
+      };
+      return memoryDb;
+    }
+  } catch (e) {
+    // Ignore error
   }
+
+  // 2. Try reading from LOCAL_DB_FILE (bundled db.json)
+  try {
+    if (fs.existsSync(LOCAL_DB_FILE)) {
+      const raw = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
+      const data = JSON.parse(raw);
+      memoryDb = {
+        product: { ...DEFAULT_DB.product, ...(data.product || {}) },
+        settings: { ...DEFAULT_DB.settings, ...(data.settings || {}) },
+        orders: data.orders || [],
+        leads: data.leads || []
+      };
+      return memoryDb;
+    }
+  } catch (e) {
+    // Ignore error
+  }
+
+  memoryDb = JSON.parse(JSON.stringify(DEFAULT_DB));
+  return memoryDb!;
 }
 
 export function saveDb(data: DatabaseSchema): void {
-  ensureDataDir();
-  fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
+  memoryDb = {
+    product: { ...data.product },
+    settings: { ...data.settings },
+    orders: [...(data.orders || [])],
+    leads: [...(data.leads || [])]
+  };
+
+  const payload = JSON.stringify(memoryDb, null, 2);
+
+  // 1. Try saving to local data folder (dev environment)
+  try {
+    if (!fs.existsSync(LOCAL_DATA_DIR)) {
+      fs.mkdirSync(LOCAL_DATA_DIR, { recursive: true });
+    }
+    fs.writeFileSync(LOCAL_DB_FILE, payload, 'utf-8');
+  } catch (e) {
+    // Expected on read-only serverless filesystem
+  }
+
+  // 2. Try saving to tmp storage (serverless environments)
+  try {
+    fs.writeFileSync(TMP_DB_FILE, payload, 'utf-8');
+  } catch (e) {
+    // Ignore error
+  }
 }
 
 export function getProductData(): ProductData {

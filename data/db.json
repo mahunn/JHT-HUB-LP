@@ -160,49 +160,6 @@
     "announcementText": "🎉 ধামাকা অফার: আজই অর্ডার করলে সারা বাংলাদেশে ক্যাশ অন ডেলিভারি সম্পূর্ণ ফ্রি!",
     "announcementActive": true
   },
-  "orders": [
-    {
-      "customerName": "Flare Full",
-      "phone": "01828034555",
-      "address": "wggggh ere gergv",
-      "cityZone": "dhaka",
-      "selectedPackage": {
-        "id": "combo-10",
-        "name": "10 Pcs Attar Combo",
-        "banglaName": "আতর কম্বো (১০ পিস)",
-        "price": 490
-      },
-      "quantity": 1,
-      "subtotal": 490,
-      "deliveryCharge": 0,
-      "total": 490,
-      "notes": "vvvvvvver",
-      "id": "HR-1002",
-      "status": "pending",
-      "createdAt": "2026-08-19T09:21:57.939Z",
-      "updatedAt": "2026-08-19T09:21:57.939Z"
-    },
-    {
-      "customerName": "Karim Uddin",
-      "phone": "01788776655",
-      "address": "Dhanmondi, Dhaka",
-      "cityZone": "dhaka",
-      "selectedPackage": {
-        "id": "combo-10",
-        "name": "10 Pcs Attar Combo",
-        "banglaName": "আতর কম্বো (১০ পিস)",
-        "price": 490
-      },
-      "quantity": 1,
-      "subtotal": 490,
-      "deliveryCharge": 0,
-      "total": 490,
-      "notes": "",
-      "id": "HR-1001",
-      "status": "pending",
-      "createdAt": "2026-08-19T09:08:58.366Z",
-      "updatedAt": "2026-08-19T09:08:58.366Z"
-    }
-  ],
+  "orders": [],
   "leads": []
 }
