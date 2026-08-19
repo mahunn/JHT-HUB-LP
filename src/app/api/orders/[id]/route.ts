@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
 import { getOrderById, updateOrderStatus, deleteOrder, getSettings } from '@/lib/db';
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: { id: string } | Promise<{ id: string }> }) {
   try {
-    const order = getOrderById(params.id);
+    const resolved = await Promise.resolve(params);
+    const orderId = decodeURIComponent(resolved?.id || '').trim();
+    const order = getOrderById(orderId);
     if (!order) {
       return NextResponse.json({ success: false, error: 'অর্ডার পাওয়া যায়নি।' }, { status: 404 });
     }
@@ -14,14 +16,16 @@ export async function GET(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, { params }: { params: { id: string } | Promise<{ id: string }> }) {
   try {
+    const resolved = await Promise.resolve(params);
+    const orderId = decodeURIComponent(resolved?.id || '').trim();
     const body = await request.json();
     if (!body.status) {
       return NextResponse.json({ success: false, error: 'Status is required' }, { status: 400 });
     }
 
-    const updated = updateOrderStatus(params.id, body.status);
+    const updated = updateOrderStatus(orderId, body.status);
     if (!updated) {
       return NextResponse.json({ success: false, error: 'Order not found' }, { status: 404 });
     }
@@ -32,9 +36,11 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, { params }: { params: { id: string } | Promise<{ id: string }> }) {
   try {
-    const success = deleteOrder(params.id);
+    const resolved = await Promise.resolve(params);
+    const orderId = decodeURIComponent(resolved?.id || '').trim();
+    const success = deleteOrder(orderId);
     if (!success) {
       return NextResponse.json({ success: false, error: 'Order not found' }, { status: 404 });
     }

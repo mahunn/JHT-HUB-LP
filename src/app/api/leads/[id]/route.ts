@@ -5,10 +5,12 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } | Promise<{ id: string }> }
 ) {
   try {
-    const lead = getLeadById(params.id);
+    const resolved = await Promise.resolve(params);
+    const leadId = decodeURIComponent(resolved?.id || '').trim();
+    const lead = getLeadById(leadId);
     if (!lead) {
       return NextResponse.json({ success: false, error: 'Lead not found' }, { status: 404 });
     }
@@ -20,21 +22,23 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } | Promise<{ id: string }> }
 ) {
   try {
+    const resolved = await Promise.resolve(params);
+    const leadId = decodeURIComponent(resolved?.id || '').trim();
     const body = await req.json();
     const { action, status, notes, callCount, customerName, address, cityZone } = body;
 
     if (action === 'call') {
-      const updated = recordLeadCall(params.id, notes);
+      const updated = recordLeadCall(leadId, notes);
       if (!updated) {
         return NextResponse.json({ success: false, error: 'Lead not found' }, { status: 404 });
       }
       return NextResponse.json({ success: true, lead: updated });
     }
 
-    const updated = updateLead(params.id, {
+    const updated = updateLead(leadId, {
       status,
       notes,
       callCount,
@@ -55,10 +59,12 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } | Promise<{ id: string }> }
 ) {
   try {
-    const deleted = deleteLead(params.id);
+    const resolved = await Promise.resolve(params);
+    const leadId = decodeURIComponent(resolved?.id || '').trim();
+    const deleted = deleteLead(leadId);
     if (!deleted) {
       return NextResponse.json({ success: false, error: 'Lead not found' }, { status: 404 });
     }

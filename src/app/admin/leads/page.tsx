@@ -37,6 +37,8 @@ export default function AdminLeadsPage() {
   const [noteText, setNoteText] = useState<string>('');
   const [convertingLead, setConvertingLead] = useState<Lead | null>(null);
   const [convertSubmitting, setConvertSubmitting] = useState<boolean>(false);
+  const [leadToDelete, setLeadToDelete] = useState<Lead | null>(null);
+  const [deletingLeadId, setDeletingLeadId] = useState<string | null>(null);
   const [notification, setNotification] = useState<string | null>(null);
 
   const fetchLeads = async () => {
@@ -126,18 +128,26 @@ export default function AdminLeadsPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('আপনি কি নিশ্চিত যে এই লিডটি মুছে ফেলতে চান?')) return;
+  const confirmDeleteLead = async () => {
+    if (!leadToDelete) return;
+    const id = leadToDelete.id;
+    setDeletingLeadId(id);
 
     try {
       const res = await fetch(`/api/leads/${id}`, { method: 'DELETE' });
       const data = await res.json();
       if (data.success) {
         setLeads((prev) => prev.filter((l) => l.id !== id));
-        showToast('লিড মুছে ফেলা হয়েছে');
+        setLeadToDelete(null);
+        showToast('লিড সফলভাবে মুছে ফেলা হয়েছে');
+      } else {
+        alert(data.error || 'লিড মোছা সম্ভব হয়নি');
       }
     } catch (e) {
       console.error(e);
+      alert('সার্ভারে সমস্যা হয়েছে');
+    } finally {
+      setDeletingLeadId(null);
     }
   };
 
@@ -584,7 +594,7 @@ export default function AdminLeadsPage() {
 
                       {/* Delete */}
                       <button
-                        onClick={() => handleDelete(lead.id)}
+                        onClick={() => setLeadToDelete(lead)}
                         className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         title="মুছে ফেলুন"
                       >
@@ -596,6 +606,54 @@ export default function AdminLeadsPage() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* CUSTOM IN-APP DELETE LEAD CONFIRMATION MODAL */}
+      {leadToDelete && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 text-center space-y-4 animate-scale-in">
+            <div className="w-14 h-14 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center mx-auto shadow-inner">
+              <AlertTriangle className="w-7 h-7" />
+            </div>
+
+            <div>
+              <h3 className="text-lg font-extrabold text-slate-900">লিডটি মুছে ফেলতে চান?</h3>
+              <p className="text-xs text-slate-500 mt-1">
+                ফোন নাম্বার <span className="font-mono font-bold text-slate-800">{leadToDelete.phone}</span> ({leadToDelete.customerName || 'কাস্টমার'}) তালিকা থেকে মুছে ফেলা হবে।
+              </p>
+            </div>
+
+            <div className="flex gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setLeadToDelete(null)}
+                disabled={deletingLeadId === leadToDelete.id}
+                className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-sm transition-colors"
+              >
+                বাতিল
+              </button>
+
+              <button
+                type="button"
+                onClick={confirmDeleteLead}
+                disabled={deletingLeadId === leadToDelete.id}
+                className="flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white font-bold py-2.5 rounded-xl text-sm transition-all shadow-md shadow-red-200 flex items-center justify-center gap-1.5"
+              >
+                {deletingLeadId === leadToDelete.id ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>মুছছে...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    <span>হ্যাঁ, মুছুন</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

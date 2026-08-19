@@ -243,8 +243,9 @@ export function updateOrderStatus(id: string, status: Order['status']): Order | 
 
 export function deleteOrder(id: string): boolean {
   const db = getDb();
+  const targetId = (id || '').trim().toLowerCase();
   const initialLength = db.orders.length;
-  db.orders = db.orders.filter((o) => o.id !== id);
+  db.orders = db.orders.filter((o) => (o.id || '').trim().toLowerCase() !== targetId);
   if (db.orders.length !== initialLength) {
     saveDb(db);
     return true;
@@ -400,8 +401,9 @@ export function recordLeadCall(id: string, notes?: string): Lead | null {
 export function deleteLead(id: string): boolean {
   const db = getDb();
   db.leads = db.leads || [];
+  const targetId = (id || '').trim().toLowerCase();
   const initialLength = db.leads.length;
-  db.leads = db.leads.filter((l) => l.id !== id);
+  db.leads = db.leads.filter((l) => (l.id || '').trim().toLowerCase() !== targetId);
   if (db.leads.length !== initialLength) {
     saveDb(db);
     return true;

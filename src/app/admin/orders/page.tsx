@@ -16,6 +16,11 @@ import {
   RefreshCw,
   Printer,
   X,
+  AlertTriangle,
+  Loader2,
+  Calendar,
+  MapPin,
+  Package,
 } from 'lucide-react';
 import { Order, OrderStatus } from '@/types/landing';
 
@@ -25,6 +30,14 @@ export default function AdminOrdersPage() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -58,14 +71,17 @@ export default function AdminOrdersPage() {
         if (selectedOrder && selectedOrder.id === id) {
           setSelectedOrder({ ...selectedOrder, status: newStatus });
         }
+        showToast(`স্ট্যাটাস পরিবর্তন করা হয়েছে: ${newStatus}`);
       }
     } catch (e) {
       console.error(e);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('আপনি কি নিশ্চিত যে এই অর্ডারটি মুছে ফেলতে চান?')) return;
+  const confirmDeleteOrder = async () => {
+    if (!orderToDelete) return;
+    const id = orderToDelete.id;
+    setDeletingId(id);
 
     try {
       const res = await fetch(`/api/orders/${id}`, { method: 'DELETE' });
@@ -75,9 +91,16 @@ export default function AdminOrdersPage() {
         if (selectedOrder && selectedOrder.id === id) {
           setSelectedOrder(null);
         }
+        setOrderToDelete(null);
+        showToast('অর্ডারটি সফলভাবে মুছে ফেলা হয়েছে!');
+      } else {
+        alert(data.error || 'অর্ডারটি মোছা সম্ভব হয়নি।');
       }
     } catch (e) {
       console.error(e);
+      alert('সার্ভারে সমস্যা হয়েছে।');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -87,11 +110,11 @@ export default function AdminOrdersPage() {
     const headers = ['Order ID', 'Customer Name', 'Phone', 'Address', 'Zone', 'Package', 'Qty', 'Subtotal', 'Delivery', 'Total', 'Status', 'Date', 'Notes'];
     const rows = orders.map((o) => [
       o.id,
-      `"${o.customerName.replace(/"/g, '""')}"`,
+      `"${(o.customerName || '').replace(/"/g, '""')}"`,
       o.phone,
-      `"${o.address.replace(/"/g, '""')}"`,
+      `"${(o.address || '').replace(/"/g, '""')}"`,
       o.cityZone,
-      `"${o.selectedPackage?.banglaName || o.selectedPackage?.name}"`,
+      `"${o.selectedPackage?.banglaName || o.selectedPackage?.name || ''}"`,
       o.quantity,
       o.subtotal,
       o.deliveryCharge,
@@ -117,10 +140,10 @@ export default function AdminOrdersPage() {
     const query = searchQuery.toLowerCase().trim();
     const matchesSearch =
       !query ||
-      order.id.toLowerCase().includes(query) ||
-      order.customerName.toLowerCase().includes(query) ||
-      order.phone.includes(query) ||
-      order.address.toLowerCase().includes(query);
+      (order.id && order.id.toLowerCase().includes(query)) ||
+      (order.customerName && order.customerName.toLowerCase().includes(query)) ||
+      (order.phone && order.phone.includes(query)) ||
+      (order.address && order.address.toLowerCase().includes(query));
 
     return matchesStatus && matchesSearch;
   });
@@ -143,7 +166,15 @@ export default function AdminOrdersPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-12">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-5 right-5 z-50 bg-slate-900 text-white text-sm font-bold px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2 animate-bounce">
+          <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
       {/* Header & Export */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
         <div>
@@ -211,8 +242,113 @@ export default function AdminOrdersPage() {
         </div>
       </div>
 
-      {/* Orders Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      {/* MOBILE CARD VIEW (Phones / Small Screens) */}
+      <div className="md:hidden space-y-3">
+        {filteredOrders.map((order) => (
+          <div
+            key={order.id}
+            className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3"
+          >
+            {/* Header: ID + Status + Price */}
+            <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+              <div className="flex items-center gap-2">
+                <span className="font-mono font-extrabold text-emerald-700 text-base">{order.id}</span>
+                <span className="text-[11px] text-slate-400">
+                  {new Date(order.createdAt).toLocaleDateString('bn-BD', { day: 'numeric', month: 'short' })}
+                </span>
+              </div>
+              <span className="font-mono font-extrabold text-slate-900 text-base">৳{order.total}</span>
+            </div>
+
+            {/* Customer Info */}
+            <div className="space-y-1 text-sm">
+              <div className="font-bold text-slate-900">{order.customerName}</div>
+              <div className="font-mono text-xs font-bold text-slate-600">{order.phone}</div>
+              <div className="text-xs text-slate-500 line-clamp-2">{order.address}</div>
+            </div>
+
+            {/* Package */}
+            <div className="text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex items-center justify-between">
+              <span className="font-bold text-slate-800">{order.selectedPackage?.banglaName}</span>
+              <span className="text-slate-500 font-medium">পরিমাণ: {order.quantity} টি</span>
+            </div>
+
+            {/* Status Selector */}
+            <div className="flex items-center justify-between gap-2 pt-1">
+              <label className="text-xs font-bold text-slate-500">স্ট্যাটাস:</label>
+              <select
+                value={order.status}
+                onChange={(e) => handleStatusChange(order.id, e.target.value as OrderStatus)}
+                className={`text-xs font-bold px-3 py-1.5 rounded-xl border focus:outline-none cursor-pointer flex-1 max-w-[170px] ${
+                  order.status === 'pending'
+                    ? 'bg-amber-50 text-amber-800 border-amber-300'
+                    : order.status === 'confirmed'
+                    ? 'bg-blue-50 text-blue-800 border-blue-300'
+                    : order.status === 'shipped'
+                    ? 'bg-purple-50 text-purple-800 border-purple-300'
+                    : order.status === 'delivered'
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                    : 'bg-red-50 text-red-800 border-red-300'
+                }`}
+              >
+                <option value="pending">পেন্ডিং</option>
+                <option value="confirmed">কনফার্মড</option>
+                <option value="shipped">কুরিয়ারে পাঠানো</option>
+                <option value="delivered">ডেলিভার্ড</option>
+                <option value="cancelled">বাতিল</option>
+              </select>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="grid grid-cols-4 gap-2 pt-2 border-t border-slate-100">
+              <a
+                href={`tel:${order.phone}`}
+                className="bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 font-bold py-2 rounded-xl text-xs flex items-center justify-center gap-1"
+              >
+                <Phone className="w-3.5 h-3.5" />
+                <span>কল</span>
+              </a>
+
+              <a
+                href={`https://wa.me/${order.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
+                  `আসসালামু আলাইকুম ${order.customerName},\nJHT HUB থেকে আপনার অর্ডারটির (${order.id}) জন্য যোগাযোগ করছি।`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-green-50 hover:bg-green-100 text-green-700 font-bold py-2 rounded-xl text-xs flex items-center justify-center gap-1"
+              >
+                <MessageCircle className="w-3.5 h-3.5" />
+                <span>হোয়াটস</span>
+              </a>
+
+              <button
+                onClick={() => setSelectedOrder(order)}
+                className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 rounded-xl text-xs flex items-center justify-center gap-1"
+              >
+                <Eye className="w-3.5 h-3.5" />
+                <span>রিসিট</span>
+              </button>
+
+              <button
+                onClick={() => setOrderToDelete(order)}
+                className="bg-red-50 hover:bg-red-100 text-red-600 font-bold py-2 rounded-xl text-xs flex items-center justify-center gap-1"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>মুছুন</span>
+              </button>
+            </div>
+          </div>
+        ))}
+
+        {filteredOrders.length === 0 && !loading && (
+          <div className="p-8 bg-white rounded-2xl border border-slate-200 text-center text-slate-400 font-medium">
+            কোনো অর্ডার পাওয়া যায়নি।
+          </div>
+        )}
+      </div>
+
+      {/* DESKTOP TABLE VIEW */}
+      <div className="hidden md:block bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50 text-slate-500 text-xs font-bold uppercase border-b border-slate-200">
@@ -340,7 +476,7 @@ export default function AdminOrdersPage() {
 
                       {/* Delete */}
                       <button
-                        onClick={() => handleDelete(order.id)}
+                        onClick={() => setOrderToDelete(order)}
                         title="মুছে ফেলুন"
                         className="p-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 transition-colors"
                       >
@@ -363,10 +499,58 @@ export default function AdminOrdersPage() {
         </div>
       </div>
 
+      {/* CUSTOM IN-APP DELETE CONFIRMATION MODAL (Reliable on mobile & desktop) */}
+      {orderToDelete && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 text-center space-y-4 animate-scale-in">
+            <div className="w-14 h-14 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center mx-auto shadow-inner">
+              <AlertTriangle className="w-7 h-7" />
+            </div>
+
+            <div>
+              <h3 className="text-lg font-extrabold text-slate-900">অর্ডার মুছে ফেলতে চান?</h3>
+              <p className="text-xs text-slate-500 mt-1">
+                অর্ডার আইডি <span className="font-mono font-bold text-slate-800">{orderToDelete.id}</span> ({orderToDelete.customerName}) সম্পূর্ণ মুছে ফেলা হবে।
+              </p>
+            </div>
+
+            <div className="flex gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setOrderToDelete(null)}
+                disabled={deletingId === orderToDelete.id}
+                className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-sm transition-colors"
+              >
+                বাতিল
+              </button>
+
+              <button
+                type="button"
+                onClick={confirmDeleteOrder}
+                disabled={deletingId === orderToDelete.id}
+                className="flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white font-bold py-2.5 rounded-xl text-sm transition-all shadow-md shadow-red-200 flex items-center justify-center gap-1.5"
+              >
+                {deletingId === orderToDelete.id ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>মুছছে...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    <span>হ্যাঁ, মুছুন</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Order Details & Receipt Modal */}
       {selectedOrder && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 relative animate-scaleIn">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 relative animate-scale-in my-8">
             <button
               onClick={() => setSelectedOrder(null)}
               className="absolute top-4 right-4 p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
@@ -441,12 +625,12 @@ export default function AdminOrdersPage() {
             </div>
 
             {/* Modal Footer Actions */}
-            <div className="pt-4 border-t border-slate-200 flex items-center gap-2">
+            <div className="pt-4 border-t border-slate-200 flex flex-wrap items-center gap-2">
               <a
                 href={`tel:${selectedOrder.phone}`}
-                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl text-center text-sm flex items-center justify-center gap-1.5 shadow"
+                className="flex-1 min-w-[100px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-3 rounded-xl text-center text-xs flex items-center justify-center gap-1 shadow"
               >
-                <Phone className="w-4 h-4" />
+                <Phone className="w-3.5 h-3.5" />
                 <span>কল দিন</span>
               </a>
 
@@ -456,9 +640,9 @@ export default function AdminOrdersPage() {
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-4 rounded-xl text-center text-sm flex items-center justify-center gap-1.5 shadow"
+                className="flex-1 min-w-[100px] bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-3 rounded-xl text-center text-xs flex items-center justify-center gap-1 shadow"
               >
-                <MessageCircle className="w-4 h-4" />
+                <MessageCircle className="w-3.5 h-3.5" />
                 <span>হোয়াটসঅ্যাপ</span>
               </a>
 
@@ -468,6 +652,15 @@ export default function AdminOrdersPage() {
                 title="প্রিন্ট করুন"
               >
                 <Printer className="w-4 h-4" />
+              </button>
+
+              <button
+                onClick={() => setOrderToDelete(selectedOrder)}
+                className="bg-red-50 hover:bg-red-100 text-red-600 font-bold p-2.5 rounded-xl transition-colors flex items-center gap-1 text-xs"
+                title="অর্ডার মুছে ফেলুন"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>মুছুন</span>
               </button>
             </div>
           </div>
