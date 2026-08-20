@@ -20,12 +20,54 @@ export default function LandingPageClient({
   initialProduct,
   initialSettings,
 }: LandingPageClientProps) {
-  const [product, setProduct] = useState<ProductData>(initialProduct);
-  const [settings, setSettings] = useState<StoreSettings>(initialSettings);
+  const [product, setProduct] = useState<ProductData>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('jht_cached_product');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed && parsed.mainBannerImage) return parsed;
+        }
+      } catch (e) {}
+    }
+    return initialProduct;
+  });
+
+  const [settings, setSettings] = useState<StoreSettings>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('jht_cached_settings');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed) return parsed;
+        }
+      } catch (e) {}
+    }
+    return initialSettings;
+  });
 
   // Live client-side hydration to ensure newly uploaded images/prices appear immediately
   useEffect(() => {
     let isMounted = true;
+
+    // Check localStorage immediately upon client mount
+    try {
+      const cached = localStorage.getItem('jht_cached_product');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed?.mainBannerImage && isMounted) {
+          setProduct(parsed);
+        }
+      }
+      const cachedSet = localStorage.getItem('jht_cached_settings');
+      if (cachedSet) {
+        const parsedSet = JSON.parse(cachedSet);
+        if (parsedSet && isMounted) {
+          setSettings(parsedSet);
+        }
+      }
+    } catch (e) {}
+
     const fetchLatest = async () => {
       try {
         const pRes = await fetch('/api/product', { cache: 'no-store' });
@@ -33,6 +75,9 @@ export default function LandingPageClient({
           const pData = await pRes.json();
           if (pData.success && pData.product && isMounted) {
             setProduct(pData.product);
+            try {
+              localStorage.setItem('jht_cached_product', JSON.stringify(pData.product));
+            } catch (e) {}
           }
         }
 
@@ -41,10 +86,13 @@ export default function LandingPageClient({
           const sData = await sRes.json();
           if (sData.success && sData.settings && isMounted) {
             setSettings(sData.settings);
+            try {
+              localStorage.setItem('jht_cached_settings', JSON.stringify(sData.settings));
+            } catch (e) {}
           }
         }
       } catch (err) {
-        // Silently fallback to initial SSR data
+        // Silently fallback
       }
     };
 

@@ -63,7 +63,7 @@ export default function HeroSection({ product }: HeroSectionProps) {
               src={selectedImage || product.mainBannerImage}
               alt={product.productName}
               fill
-              className="object-cover"
+              className="object-cover transition-opacity duration-300"
               priority
               unoptimized
             />

@@ -60,6 +60,9 @@ export default function AdminProductPage() {
       const data = await res.json();
       if (data.success) {
         setProduct(data.product);
+        try {
+          localStorage.setItem('jht_cached_product', JSON.stringify(data.product));
+        } catch (e) {}
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 3000);
       }
