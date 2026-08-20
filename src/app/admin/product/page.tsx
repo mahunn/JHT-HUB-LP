@@ -27,7 +27,6 @@ export default function AdminProductPage() {
   const [activeTab, setActiveTab] = useState<'general' | 'images' | 'packages' | 'scents' | 'reviews' | 'delivery'>('general');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const galleryInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchProduct();
@@ -111,7 +110,7 @@ export default function AdminProductPage() {
     });
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, isGallery: boolean = false) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0 || !product) return;
 
@@ -122,23 +121,44 @@ export default function AdminProductPage() {
       const compressedDataUrl = await compressImage(file);
       if (!compressedDataUrl) return;
 
-      if (isGallery) {
-        setProduct((prev) => prev ? {
+      setProduct((prev) => {
+        if (!prev) return prev;
+        const currentGallery = prev.galleryImages || [];
+        const isFirst = currentGallery.length === 0 || !prev.mainBannerImage;
+        return {
           ...prev,
-          galleryImages: [...prev.galleryImages, compressedDataUrl],
-        } : prev);
-      } else {
-        setProduct((prev) => prev ? {
-          ...prev,
-          mainBannerImage: compressedDataUrl,
-        } : prev);
-      }
+          mainBannerImage: isFirst ? compressedDataUrl : prev.mainBannerImage,
+          galleryImages: [...currentGallery, compressedDataUrl],
+        };
+      });
 
       // Reset input value so same file can be selected again
       e.target.value = '';
     } catch (e) {
       console.error('Image upload failed', e);
     }
+  };
+
+  const setAsMainImage = (imgUrl: string) => {
+    if (!product) return;
+    const filtered = (product.galleryImages || []).filter((img) => img !== imgUrl);
+    setProduct({
+      ...product,
+      mainBannerImage: imgUrl,
+      galleryImages: [imgUrl, ...filtered],
+    });
+  };
+
+  const removeImage = (index: number) => {
+    if (!product) return;
+    const updated = [...(product.galleryImages || [])];
+    const removed = updated.splice(index, 1)[0];
+    const nextMain = product.mainBannerImage === removed ? (updated[0] || '') : product.mainBannerImage;
+    setProduct({
+      ...product,
+      mainBannerImage: nextMain,
+      galleryImages: updated,
+    });
   };
 
   const handlePackageImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, pkgId: string) => {
@@ -410,93 +430,120 @@ export default function AdminProductPage() {
       {/* TAB 2: Images & Gallery */}
       {activeTab === 'images' && (
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
-          <h2 className="text-lg font-bold text-slate-900 pb-2 border-b border-slate-200 flex items-center gap-2">
-            <ImageIcon className="w-5 h-5 text-emerald-600" />
-            <span>ছবি ও গ্যালারি ম্যানেজমেন্ট</span>
-          </h2>
-
-          {/* Main Banner Image */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-2">মূল ব্যানার ছবি (Main Product Image)</label>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <div className="relative w-32 h-32 rounded-xl overflow-hidden bg-slate-100 border border-slate-300 flex-shrink-0">
-                {product.mainBannerImage ? (
-                  <Image src={product.mainBannerImage} alt="Main" fill className="object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-slate-400">ছবি নেই</div>
-                )}
-              </div>
-
-              <div className="space-y-2 flex-1 w-full">
-                <input
-                  type="text"
-                  placeholder="ছবির সরাসরি লিংক (URL) দিন"
-                  value={product.mainBannerImage}
-                  onChange={(e) => setProduct({ ...product, mainBannerImage: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
-                />
-
-                <div className="flex items-center gap-2">
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    accept="image/*"
-                    onChange={(e) => handleFileUpload(e, false)}
-                    className="hidden"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-xl text-xs transition-colors flex items-center gap-1.5"
-                  >
-                    <Upload className="w-3.5 h-3.5" />
-                    <span>কম্পিউটার/মোবাইল থেকে ছবি আপলোড করুন</span>
-                  </button>
-                </div>
-              </div>
+          {/* Header & Single Upload Button */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <ImageIcon className="w-5 h-5 text-emerald-600" />
+                <span>ছবি ও গ্যালারি ম্যানেজমেন্ট</span>
+              </h2>
+              <p className="text-xs text-slate-500 mt-1">
+                ছবি আপলোড করুন এবং যেকোনো ছবিকে <span className="font-bold text-emerald-700">"ডিফল্ট / মূল ছবি"</span> হিসেবে সেট করুন
+              </p>
             </div>
-          </div>
 
-          {/* Gallery Images */}
-          <div className="pt-4 border-t border-slate-200">
-            <div className="flex items-center justify-between mb-3">
-              <label className="text-xs font-bold text-slate-700">অতিরিক্ত গ্যালারি ছবিসমূহ</label>
+            <div>
               <input
                 type="file"
-                ref={galleryInputRef}
+                ref={fileInputRef}
                 accept="image/*"
-                onChange={(e) => handleFileUpload(e, true)}
+                onChange={handleFileUpload}
                 className="hidden"
               />
               <button
                 type="button"
-                onClick={() => galleryInputRef.current?.click()}
-                className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold px-3 py-1.5 rounded-lg text-xs flex items-center gap-1 transition-colors"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-extrabold px-5 py-2.5 rounded-xl text-sm transition-all shadow flex items-center justify-center gap-2"
               >
-                <Plus className="w-3.5 h-3.5" />
-                <span>নতুন ছবি যোগ করুন</span>
+                <Upload className="w-4 h-4" />
+                <span>নতুন ছবি আপলোড করুন</span>
               </button>
             </div>
+          </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {product.galleryImages.map((img, idx) => (
-                <div key={idx} className="relative group rounded-xl overflow-hidden border border-slate-300 aspect-square bg-slate-100 shadow-sm">
-                  <Image src={img} alt={`Gallery ${idx}`} fill className="object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const updated = [...product.galleryImages];
-                      updated.splice(idx, 1);
-                      setProduct({ ...product, galleryImages: updated });
-                    }}
-                    className="absolute top-2 right-2 p-2 rounded-full bg-red-600 hover:bg-red-700 active:scale-90 text-white transition-all shadow-md z-10"
-                    title="ছবি মুছে ফেলুন"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))}
+          {/* Gallery Grid with Default / Main Selector */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <label className="text-xs font-bold text-slate-700">
+                মোট ছবি ({product.galleryImages?.length || 0} টি)
+              </label>
+              <span className="text-xs text-slate-400">
+                "মূল ছবি" হিসেবে চিহ্নিত ছবিটি ল্যান্ডিং পেইজের প্রধান ব্যানারে বড় করে প্রদর্শিত হবে
+              </span>
             </div>
+
+            {(!product.galleryImages || product.galleryImages.length === 0) ? (
+              <div className="border-2 border-dashed border-slate-200 rounded-2xl p-10 text-center bg-slate-50 flex flex-col items-center justify-center gap-3">
+                <ImageIcon className="w-12 h-12 text-slate-300" />
+                <p className="text-sm font-bold text-slate-600">এখনো কোনো ছবি আপলোড করা হয়নি</p>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-xs font-bold text-emerald-700 bg-emerald-100 hover:bg-emerald-200 px-4 py-2 rounded-xl transition-colors flex items-center gap-1.5"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>প্রথম ছবি আপলোড করুন</span>
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {product.galleryImages.map((img, idx) => {
+                  const isMain = product.mainBannerImage === img || (!product.mainBannerImage && idx === 0);
+                  return (
+                    <div
+                      key={idx}
+                      className={`relative rounded-2xl overflow-hidden border-2 bg-slate-50 transition-all flex flex-col ${
+                        isMain
+                          ? 'border-emerald-600 ring-2 ring-emerald-500/20 shadow-md'
+                          : 'border-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      {/* Image Preview */}
+                      <div className="relative aspect-square w-full bg-slate-100">
+                        <Image src={img} alt={`Product ${idx}`} fill className="object-cover" unoptimized />
+
+                        {/* Delete Button */}
+                        <button
+                          type="button"
+                          onClick={() => removeImage(idx)}
+                          className="absolute top-2.5 right-2.5 p-2 rounded-full bg-red-600 hover:bg-red-700 active:scale-90 text-white transition-all shadow-md z-10"
+                          title="ছবি মুছে ফেলুন"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+
+                        {/* Current Main Badge */}
+                        {isMain && (
+                          <div className="absolute top-2.5 left-2.5 bg-emerald-600 text-white text-[11px] font-extrabold px-3 py-1 rounded-lg shadow-md flex items-center gap-1 z-10">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>মূল ছবি (ডিফল্ট)</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Card Action */}
+                      <div className="p-3 bg-white border-t border-slate-100 flex items-center justify-center">
+                        {isMain ? (
+                          <span className="text-xs font-bold text-emerald-700 flex items-center gap-1.5 py-1">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                            প্রধান ব্যানার হিসেবে সেট করা আছে
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setAsMainImage(img)}
+                            className="w-full bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 font-bold py-2 px-3 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 border border-slate-200 hover:border-emerald-300 active:scale-95"
+                          >
+                            <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                            <span>মূল ছবি (ডিফল্ট) হিসেবে সেট করুন</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       )}
