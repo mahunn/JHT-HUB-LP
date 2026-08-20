@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { ShoppingBag, ShieldCheck, Truck, CheckCircle, RotateCcw, Star } from 'lucide-react';
 import { ProductData } from '@/types/landing';
@@ -11,6 +11,12 @@ interface HeroSectionProps {
 
 export default function HeroSection({ product }: HeroSectionProps) {
   const [selectedImage, setSelectedImage] = useState(product.mainBannerImage || product.galleryImages[0]);
+
+  useEffect(() => {
+    if (product.mainBannerImage) {
+      setSelectedImage(product.mainBannerImage);
+    }
+  }, [product.mainBannerImage]);
 
   const scrollToOrder = () => {
     const el = document.getElementById('ordernowyet');
