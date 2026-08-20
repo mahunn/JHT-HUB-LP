@@ -23,7 +23,7 @@ export interface ProductFeature {
   id: string;
   title: string;
   description: string;
-  iconName: string;
+  iconName?: string;
 }
 
 export interface TrustBadge {
@@ -78,7 +78,7 @@ export interface StoreSettings {
   tiktokPixelId: string;
   adminUsername?: string;
   adminPassword?: string;
-  adminPin: string;
+  adminPin?: string;
   announcementText: string;
   announcementActive: boolean;
 }

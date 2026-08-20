@@ -34,7 +34,7 @@ export default function FeaturesGrid({ features }: FeaturesGridProps) {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           {features.map((feature, idx) => {
-            const IconComponent = iconMap[feature.iconName] || Sparkles;
+            const IconComponent = (feature.iconName && iconMap[feature.iconName]) || Sparkles;
             return (
               <div
                 key={feature.id || idx}

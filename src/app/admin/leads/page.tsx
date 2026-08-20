@@ -25,6 +25,8 @@ import {
   ExternalLink,
   ChevronRight,
   Sparkles,
+  AlertTriangle,
+  Loader2,
 } from 'lucide-react';
 import { Lead, LeadStatus, ComboPackage } from '@/types/landing';
 

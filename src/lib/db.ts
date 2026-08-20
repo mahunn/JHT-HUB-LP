@@ -1,12 +1,10 @@
 import fs from 'fs';
 import path from 'path';
-import os from 'os';
 import { DatabaseSchema, ProductData, StoreSettings, Order, Lead, LeadStatus } from '@/types/landing';
 
 const LOCAL_DATA_DIR = path.join(process.cwd(), 'data');
 const LOCAL_DB_FILE = path.join(LOCAL_DATA_DIR, 'db.json');
-const TMP_DATA_DIR = typeof os.tmpdir === 'function' ? os.tmpdir() : '/tmp';
-const TMP_DB_FILE = path.join(TMP_DATA_DIR, 'jht_db.json');
+const TMP_DB_FILE = path.join('/tmp', 'jht_db.json');
 
 // In-memory cache for serverless environments
 let memoryDb: DatabaseSchema | null = null;

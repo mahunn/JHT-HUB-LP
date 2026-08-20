@@ -71,35 +71,88 @@ export default function AdminProductPage() {
     }
   };
 
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = document.createElement('img');
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const maxDimension = 1200;
+          let width = img.width;
+          let height = img.height;
+          if (width > height) {
+            if (width > maxDimension) {
+              height = Math.round((height * maxDimension) / width);
+              width = maxDimension;
+            }
+          } else {
+            if (height > maxDimension) {
+              width = Math.round((width * maxDimension) / height);
+              height = maxDimension;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            resolve(event.target?.result as string);
+            return;
+          }
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          resolve(compressedDataUrl);
+        };
+        img.onerror = () => resolve(event.target?.result as string);
+      };
+      reader.onerror = () => resolve('');
+    });
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, isGallery: boolean = false) => {
     const files = e.target.files;
-    if (!files || files.length === 0) return;
+    if (!files || files.length === 0 || !product) return;
 
     const file = files[0];
-    const formData = new FormData();
-    formData.append('file', file);
 
     try {
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await res.json();
-      if (data.success && product) {
-        if (isGallery) {
-          setProduct({
-            ...product,
-            galleryImages: [...product.galleryImages, data.url],
-          });
-        } else {
-          setProduct({
-            ...product,
-            mainBannerImage: data.url,
-          });
-        }
+      // 1. Compress image client-side to lightweight Data URL (guaranteed to work on phones & Vercel)
+      const compressedDataUrl = await compressImage(file);
+      if (!compressedDataUrl) return;
+
+      if (isGallery) {
+        setProduct((prev) => prev ? {
+          ...prev,
+          galleryImages: [...prev.galleryImages, compressedDataUrl],
+        } : prev);
+      } else {
+        setProduct((prev) => prev ? {
+          ...prev,
+          mainBannerImage: compressedDataUrl,
+        } : prev);
       }
+
+      // Reset input value so same file can be selected again
+      e.target.value = '';
     } catch (e) {
       console.error('Image upload failed', e);
+    }
+  };
+
+  const handlePackageImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, pkgId: string) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !product) return;
+
+    try {
+      const compressedDataUrl = await compressImage(files[0]);
+      if (compressedDataUrl) {
+        updatePackage(pkgId, { image: compressedDataUrl });
+      }
+      e.target.value = '';
+    } catch (e) {
+      console.error('Package image upload failed', e);
     }
   };
 
@@ -427,7 +480,7 @@ export default function AdminProductPage() {
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {product.galleryImages.map((img, idx) => (
-                <div key={idx} className="relative group rounded-xl overflow-hidden border border-slate-300 aspect-square bg-slate-100">
+                <div key={idx} className="relative group rounded-xl overflow-hidden border border-slate-300 aspect-square bg-slate-100 shadow-sm">
                   <Image src={img} alt={`Gallery ${idx}`} fill className="object-cover" />
                   <button
                     type="button"
@@ -436,7 +489,8 @@ export default function AdminProductPage() {
                       updated.splice(idx, 1);
                       setProduct({ ...product, galleryImages: updated });
                     }}
-                    className="absolute top-2 right-2 p-1.5 rounded-full bg-red-600 text-white opacity-0 group-hover:opacity-100 transition-opacity shadow"
+                    className="absolute top-2 right-2 p-2 rounded-full bg-red-600 hover:bg-red-700 active:scale-90 text-white transition-all shadow-md z-10"
+                    title="ছবি মুছে ফেলুন"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -562,6 +616,34 @@ export default function AdminProductPage() {
                       onChange={(e) => updatePackage(pkg.id, { offerPrice: parseInt(e.target.value) || 0 })}
                       className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-mono font-extrabold text-emerald-700 focus:ring-2 focus:ring-emerald-500 outline-none"
                     />
+                  </div>
+
+                  <div className="sm:col-span-3 pt-2 border-t border-slate-200">
+                    <label className="block text-[11px] font-bold text-slate-600 mb-1">প্যাকেজের ছবি (Image URL বা ফাইল আপলোড)</label>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                      {pkg.image && (
+                        <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-slate-100 border border-slate-300 flex-shrink-0">
+                          <Image src={pkg.image} alt={pkg.name} fill className="object-cover" />
+                        </div>
+                      )}
+                      <input
+                        type="text"
+                        placeholder="ছবির লিংক বা নিচের বাটন থেকে আপলোড করুন"
+                        value={pkg.image || ''}
+                        onChange={(e) => updatePackage(pkg.id, { image: e.target.value })}
+                        className="flex-1 px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-mono focus:ring-2 focus:ring-emerald-500 outline-none w-full"
+                      />
+                      <label className="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-2 rounded-lg text-xs flex items-center gap-1 flex-shrink-0">
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>ছবি আপলোড</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handlePackageImageUpload(e, pkg.id)}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
                   </div>
                 </div>
               </div>
