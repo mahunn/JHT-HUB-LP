@@ -65,6 +65,7 @@ export default function HeroSection({ product }: HeroSectionProps) {
               fill
               className="object-cover"
               priority
+              unoptimized
             />
             {product.packages[0] && (
               <div className="absolute bottom-3 right-3 bg-gradient-to-r from-emerald-700 to-emerald-600 text-white text-sm font-extrabold px-4 py-2 rounded-xl shadow-lg backdrop-blur-sm">
@@ -88,7 +89,7 @@ export default function HeroSection({ product }: HeroSectionProps) {
                       : 'border-slate-200 opacity-50 hover:opacity-100 hover:border-slate-300'
                   }`}
                 >
-                  <Image src={img} alt={`Gallery ${idx + 1}`} fill className="object-cover" />
+                  <Image src={img} alt={`Gallery ${idx + 1}`} fill className="object-cover" unoptimized />
                 </button>
               ))}
             </div>

@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { getProductData, updateProductData } from '@/lib/db';
+import { getProductDataAsync, updateProductData } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const product = getProductData();
+    const product = await getProductDataAsync();
     return NextResponse.json({ success: true, product });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

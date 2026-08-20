@@ -179,9 +179,50 @@ export function saveDb(data: DatabaseSchema): void {
   } catch (e) {
     // Ignore error
   }
+
+  // 3. Optional Vercel KV / Upstash cloud sync if configured
+  const kvUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+  const kvToken = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (kvUrl && kvToken) {
+    fetch(`${kvUrl}/set/jhthub_db_v1`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${kvToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    }).catch(() => {});
+  }
 }
 
 export function getProductData(): ProductData {
+  return getDb().product;
+}
+
+export async function getProductDataAsync(): Promise<ProductData> {
+  const kvUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+  const kvToken = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (kvUrl && kvToken) {
+    try {
+      const res = await fetch(`${kvUrl}/get/jhthub_db_v1`, {
+        headers: { Authorization: `Bearer ${kvToken}` },
+        cache: 'no-store',
+      });
+      const json = await res.json();
+      if (json?.result) {
+        const parsed = typeof json.result === 'string' ? JSON.parse(json.result) : json.result;
+        if (parsed?.product) {
+          memoryDb = {
+            product: { ...DEFAULT_DB.product, ...parsed.product },
+            settings: { ...DEFAULT_DB.settings, ...(parsed.settings || {}) },
+            orders: parsed.orders || [],
+            leads: parsed.leads || [],
+          };
+          return memoryDb.product;
+        }
+      }
+    } catch (e) {}
+  }
   return getDb().product;
 }
 
@@ -193,6 +234,33 @@ export function updateProductData(product: Partial<ProductData>): ProductData {
 }
 
 export function getSettings(): StoreSettings {
+  return getDb().settings;
+}
+
+export async function getSettingsAsync(): Promise<StoreSettings> {
+  const kvUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+  const kvToken = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (kvUrl && kvToken) {
+    try {
+      const res = await fetch(`${kvUrl}/get/jhthub_db_v1`, {
+        headers: { Authorization: `Bearer ${kvToken}` },
+        cache: 'no-store',
+      });
+      const json = await res.json();
+      if (json?.result) {
+        const parsed = typeof json.result === 'string' ? JSON.parse(json.result) : json.result;
+        if (parsed?.settings) {
+          memoryDb = {
+            product: { ...DEFAULT_DB.product, ...(parsed.product || {}) },
+            settings: { ...DEFAULT_DB.settings, ...parsed.settings },
+            orders: parsed.orders || [],
+            leads: parsed.leads || [],
+          };
+          return memoryDb.settings;
+        }
+      }
+    } catch (e) {}
+  }
   return getDb().settings;
 }
 

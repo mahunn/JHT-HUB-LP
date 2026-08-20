@@ -66,6 +66,18 @@ export default function CheckoutOrderForm({ product }: CheckoutOrderFormProps) {
     }
   }, []);
 
+  useEffect(() => {
+    if (product.packages && product.packages.length > 0) {
+      const currentStillExists = product.packages.find((p) => p.id === selectedPkg.id);
+      if (currentStillExists) {
+        setSelectedPkg(currentStillExists);
+      } else {
+        const def = product.packages.find((p) => p.isDefault) || product.packages[0];
+        if (def) setSelectedPkg(def);
+      }
+    }
+  }, [product.packages]);
+
   const handlePackageSelect = (pkg: ComboPackage) => {
     setSelectedPkg(pkg);
     setErrorMessage('');

@@ -1,14 +1,14 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
-import { getProductData, getSettings } from '@/lib/db';
+import { getSettings, getProductDataAsync, getSettingsAsync } from '@/lib/db';
 import PixelTracker from '@/components/PixelTracker';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export async function generateMetadata(): Promise<Metadata> {
-  const product = getProductData();
-  const settings = getSettings();
+  const product = await getProductDataAsync();
+  const settings = await getSettingsAsync();
   
   return {
     title: `${product.productName} - ${settings.storeName}`,

@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { getSettings, updateSettings } from '@/lib/db';
+import { getSettingsAsync, updateSettings } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const settings = getSettings();
+    const settings = await getSettingsAsync();
     return NextResponse.json({ success: true, settings });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
