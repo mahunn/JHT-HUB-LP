@@ -333,18 +333,17 @@ export default function CheckoutOrderForm({ product }: CheckoutOrderFormProps) {
 
                       {/* Pricing block */}
                       <div className="text-right flex-shrink-0 ml-1 sm:ml-2">
-                        <div className="flex items-center gap-1 justify-end mb-0.5">
-                          <span className="text-[11px] text-slate-400 line-through">৳{pkg.regularPrice}</span>
-                          <span className="text-[9px] font-extrabold text-white bg-red-500 px-1.5 py-0.5 rounded-full shadow-xs leading-none">
-                            -{savingsPercent}%
-                          </span>
-                        </div>
+                        {pkg.regularPrice > pkg.offerPrice && (
+                          <div className="flex items-center gap-1 justify-end mb-0.5">
+                            <span className="text-[11px] text-slate-400 line-through">৳{pkg.regularPrice}</span>
+                            <span className="text-[9px] font-extrabold text-white bg-red-500 px-1.5 py-0.5 rounded-full shadow-xs leading-none">
+                              -{savingsPercent}%
+                            </span>
+                          </div>
+                        )}
                         <span className={`text-lg sm:text-xl font-black ${isSelected ? 'text-emerald-700' : 'text-slate-800'}`}>
                           ৳{pkg.offerPrice}
                         </span>
-                        <p className="text-[9px] font-bold text-emerald-600 mt-0.5">
-                          সেভ ৳{savingsAmount}
-                        </p>
                       </div>
                     </div>
                   </div>
