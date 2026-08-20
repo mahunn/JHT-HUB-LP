@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { ShoppingCart, Check, ShieldCheck, MapPin, Phone, User, FileText, Loader2, Truck, CreditCard, Package } from 'lucide-react';
 import { ProductData, ComboPackage } from '@/types/landing';
 
@@ -258,78 +259,87 @@ export default function CheckoutOrderForm({ product }: CheckoutOrderFormProps) {
             </div>
 
             <div className="space-y-3">
-              {sortedPackages.map((pkg) => {
+              {sortedPackages.map((pkg, idx) => {
                 const isSelected = selectedPkg.id === pkg.id;
                 const isDefault = pkg.isDefault;
                 const savingsPercent = Math.round(((pkg.regularPrice - pkg.offerPrice) / pkg.regularPrice) * 100);
                 const savingsAmount = pkg.regularPrice - pkg.offerPrice;
+                const pkgImage = pkg.image || (product.galleryImages && product.galleryImages[idx % product.galleryImages.length]) || product.mainBannerImage;
 
                 return (
                   <div
                     key={pkg.id}
                     onClick={() => handlePackageSelect(pkg)}
-                    className={`relative cursor-pointer transition-all duration-300 rounded-2xl overflow-hidden ${
+                    className={`relative cursor-pointer transition-all duration-200 rounded-2xl overflow-hidden ${
                       isSelected
-                        ? 'shadow-lg ring-2 ring-emerald-500'
-                        : 'hover:shadow-md border border-slate-100 hover:border-slate-200'
+                        ? 'border-2 border-emerald-600 shadow-md ring-1 ring-emerald-500/20'
+                        : 'border border-slate-200 hover:border-slate-300 hover:shadow-xs'
                     }`}
                   >
                     {/* "BEST VALUE" top ribbon for the default/recommended package */}
                     {isDefault && (
-                      <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 text-white text-[10px] font-extrabold text-center py-1 tracking-wider uppercase flex items-center justify-center gap-1">
-                        <span>⭐</span> সবচেয়ে জনপ্রিয় — সেরা মূল্য <span>⭐</span>
+                      <div className="w-full bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 text-white text-[11px] font-extrabold text-center py-1 tracking-wider uppercase flex items-center justify-center gap-1.5 shadow-xs">
+                        <span>⭐</span> সবচেয়ে জনপ্রিয় — সেরা মূল্য <span>⭐</span>
                       </div>
                     )}
 
-                    <div className={`p-4 flex items-center gap-3 ${
+                    <div className={`p-3.5 sm:p-4 flex items-center gap-3 sm:gap-3.5 ${
                       isSelected
-                        ? 'bg-gradient-to-r from-emerald-50/80 to-white'
+                        ? 'bg-emerald-50/50'
                         : 'bg-white'
                     }`}>
-                      {/* Accent bar on left when selected */}
-                      {isSelected && (
-                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-500 to-emerald-600" />
-                      )}
-
                       {/* Radio circle */}
                       <div
-                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
                           isSelected
-                            ? 'border-emerald-600 bg-emerald-600 scale-110 shadow-md shadow-emerald-600/30'
+                            ? 'border-emerald-600 bg-emerald-600 shadow-xs'
                             : 'border-slate-300 bg-white'
                         }`}
                       >
                         {isSelected && <Check className="w-3 h-3 text-white stroke-[3]" />}
                       </div>
 
+                      {/* Small Product Thumbnail */}
+                      {pkgImage && (
+                        <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden bg-slate-100 border border-slate-200/80 flex-shrink-0 shadow-xs">
+                          <Image
+                            src={pkgImage}
+                            alt={pkg.banglaName || pkg.name}
+                            fill
+                            className="object-cover"
+                            unoptimized
+                          />
+                        </div>
+                      )}
+
                       {/* Package Info */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h4 className={`font-extrabold text-sm ${isSelected ? 'text-emerald-900' : 'text-slate-800'}`}>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <h4 className={`font-extrabold text-sm sm:text-base ${isSelected ? 'text-slate-900' : 'text-slate-800'}`}>
                             {pkg.banglaName}
                           </h4>
                           {pkg.badge && (
                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                               isDefault
-                                ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-sm shadow-amber-400/30'
+                                ? 'bg-amber-500 text-white shadow-xs'
                                 : 'bg-red-50 text-red-600 border border-red-200'
                             }`}>
                               {pkg.badge}
                             </span>
                           )}
                         </div>
-                        <p className="text-[11px] text-slate-400 mt-0.5">{pkg.subtitle}</p>
+                        <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5 line-clamp-1">{pkg.subtitle}</p>
                       </div>
 
                       {/* Pricing block */}
-                      <div className="text-right flex-shrink-0 ml-2">
-                        <div className="flex items-center gap-1.5 justify-end mb-0.5">
+                      <div className="text-right flex-shrink-0 ml-1 sm:ml-2">
+                        <div className="flex items-center gap-1 justify-end mb-0.5">
                           <span className="text-[11px] text-slate-400 line-through">৳{pkg.regularPrice}</span>
-                          <span className="text-[9px] font-extrabold text-white bg-gradient-to-r from-red-500 to-rose-500 px-1.5 py-0.5 rounded-full shadow-sm leading-none">
+                          <span className="text-[9px] font-extrabold text-white bg-red-500 px-1.5 py-0.5 rounded-full shadow-xs leading-none">
                             -{savingsPercent}%
                           </span>
                         </div>
-                        <span className={`text-xl font-black ${isSelected ? 'text-emerald-700' : 'text-slate-800'}`}>
+                        <span className={`text-lg sm:text-xl font-black ${isSelected ? 'text-emerald-700' : 'text-slate-800'}`}>
                           ৳{pkg.offerPrice}
                         </span>
                         <p className="text-[9px] font-bold text-emerald-600 mt-0.5">
