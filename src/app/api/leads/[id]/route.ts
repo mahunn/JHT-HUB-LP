@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getLeadById, updateLead, recordLeadCall, deleteLead } from '@/lib/db';
+import { getLeadByIdAsync, updateLeadAsync, recordLeadCallAsync, deleteLeadAsync } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,7 +10,7 @@ export async function GET(
   try {
     const resolved = await Promise.resolve(params);
     const leadId = decodeURIComponent(resolved?.id || '').trim();
-    const lead = getLeadById(leadId);
+    const lead = await getLeadByIdAsync(leadId);
     if (!lead) {
       return NextResponse.json({ success: false, error: 'Lead not found' }, { status: 404 });
     }
@@ -31,14 +31,14 @@ export async function PATCH(
     const { action, status, notes, callCount, customerName, address, cityZone } = body;
 
     if (action === 'call') {
-      const updated = recordLeadCall(leadId, notes);
+      const updated = await recordLeadCallAsync(leadId, notes);
       if (!updated) {
         return NextResponse.json({ success: false, error: 'Lead not found' }, { status: 404 });
       }
       return NextResponse.json({ success: true, lead: updated });
     }
 
-    const updated = updateLead(leadId, {
+    const updated = await updateLeadAsync(leadId, {
       status,
       notes,
       callCount,
@@ -64,11 +64,11 @@ export async function DELETE(
   try {
     const resolved = await Promise.resolve(params);
     const leadId = decodeURIComponent(resolved?.id || '').trim();
-    const deleted = deleteLead(leadId);
+    const deleted = await deleteLeadAsync(leadId);
     if (!deleted) {
       return NextResponse.json({ success: false, error: 'Lead not found' }, { status: 404 });
     }
-    return NextResponse.json({ success: true, message: 'Lead deleted successfully' });
+    return NextResponse.json({ success: true });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }

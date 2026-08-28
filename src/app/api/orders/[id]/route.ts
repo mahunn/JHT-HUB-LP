@@ -1,15 +1,17 @@
 import { NextResponse } from 'next/server';
-import { getOrderById, updateOrderStatus, deleteOrder, getSettings } from '@/lib/db';
+import { getOrderByIdAsync, updateOrderStatusAsync, deleteOrderAsync, getSettingsAsync } from '@/lib/db';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request, { params }: { params: { id: string } | Promise<{ id: string }> }) {
   try {
     const resolved = await Promise.resolve(params);
     const orderId = decodeURIComponent(resolved?.id || '').trim();
-    const order = getOrderById(orderId);
+    const order = await getOrderByIdAsync(orderId);
     if (!order) {
       return NextResponse.json({ success: false, error: 'অর্ডার পাওয়া যায়নি।' }, { status: 404 });
     }
-    const settings = getSettings();
+    const settings = await getSettingsAsync();
     return NextResponse.json({ success: true, order, settings });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
@@ -25,7 +27,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       return NextResponse.json({ success: false, error: 'Status is required' }, { status: 400 });
     }
 
-    const updated = updateOrderStatus(orderId, body.status);
+    const updated = await updateOrderStatusAsync(orderId, body.status);
     if (!updated) {
       return NextResponse.json({ success: false, error: 'Order not found' }, { status: 404 });
     }
@@ -40,7 +42,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
   try {
     const resolved = await Promise.resolve(params);
     const orderId = decodeURIComponent(resolved?.id || '').trim();
-    const success = deleteOrder(orderId);
+    const success = await deleteOrderAsync(orderId);
     if (!success) {
       return NextResponse.json({ success: false, error: 'Order not found' }, { status: 404 });
     }

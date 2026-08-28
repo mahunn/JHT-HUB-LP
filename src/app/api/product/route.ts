@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { getProductDataAsync, updateProductData } from '@/lib/db';
+import { getProductDataAsync, updateProductDataAsync } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +16,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const updated = updateProductData(body);
+    const updated = await updateProductDataAsync(body);
     try {
       revalidatePath('/', 'layout');
       revalidatePath('/');

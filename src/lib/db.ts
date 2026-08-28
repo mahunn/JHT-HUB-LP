@@ -6,8 +6,43 @@ const LOCAL_DATA_DIR = path.join(process.cwd(), 'data');
 const LOCAL_DB_FILE = path.join(LOCAL_DATA_DIR, 'db.json');
 const TMP_DB_FILE = path.join('/tmp', 'jht_db.json');
 
-// In-memory cache for serverless environments
+// In-memory cache for fast access
 let memoryDb: DatabaseSchema | null = null;
+
+// Cloud Sync Configuration (Supabase & Vercel KV / Upstash Redis)
+function getSupabaseConfig() {
+  const url = (
+    process.env.SUPABASE_URL ||
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    ''
+  ).trim().replace(/\/+$/, '');
+
+  const key = (
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
+    process.env.SUPABASE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    ''
+  ).trim();
+
+  return url && key ? { url, key } : null;
+}
+
+function getKvConfig() {
+  const url = (
+    process.env.KV_REST_API_URL ||
+    process.env.UPSTASH_REDIS_REST_URL ||
+    ''
+  ).trim().replace(/\/+$/, '');
+
+  const token = (
+    process.env.KV_REST_API_TOKEN ||
+    process.env.UPSTASH_REDIS_REST_TOKEN ||
+    ''
+  ).trim();
+
+  return url && token ? { url, token } : null;
+}
 
 const DEFAULT_DB: DatabaseSchema = {
   product: {
@@ -110,6 +145,7 @@ const DEFAULT_DB: DatabaseSchema = {
   leads: []
 };
 
+// Synchronous local loader
 export function getDb(): DatabaseSchema {
   if (memoryDb) {
     return memoryDb;
@@ -128,9 +164,7 @@ export function getDb(): DatabaseSchema {
       };
       return memoryDb;
     }
-  } catch (e) {
-    // Ignore error
-  }
+  } catch (e) {}
 
   // 2. Try reading from LOCAL_DB_FILE (bundled db.json)
   try {
@@ -145,14 +179,75 @@ export function getDb(): DatabaseSchema {
       };
       return memoryDb;
     }
-  } catch (e) {
-    // Ignore error
-  }
+  } catch (e) {}
 
   memoryDb = JSON.parse(JSON.stringify(DEFAULT_DB));
   return memoryDb!;
 }
 
+// Asynchronous Cloud & Local Loader
+export async function getDbAsync(): Promise<DatabaseSchema> {
+  const supabase = getSupabaseConfig();
+  if (supabase) {
+    try {
+      const res = await fetch(`${supabase.url}/rest/v1/kv_store?key=eq.jhthub_db&select=value`, {
+        method: 'GET',
+        headers: {
+          apikey: supabase.key,
+          Authorization: `Bearer ${supabase.key}`,
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-store',
+      });
+      if (res.ok) {
+        const rows = await res.json();
+        if (Array.isArray(rows) && rows.length > 0 && rows[0]?.value) {
+          const cloudData = rows[0].value;
+          memoryDb = {
+            product: { ...DEFAULT_DB.product, ...(cloudData.product || {}) },
+            settings: { ...DEFAULT_DB.settings, ...(cloudData.settings || {}) },
+            orders: cloudData.orders || [],
+            leads: cloudData.leads || [],
+          };
+          return memoryDb;
+        }
+      }
+    } catch (err) {
+      console.error('[Supabase Fetch Error]:', err);
+    }
+  }
+
+  const kv = getKvConfig();
+  if (kv) {
+    try {
+      const res = await fetch(`${kv.url}/get/jhthub_db_v1`, {
+        headers: { Authorization: `Bearer ${kv.token}` },
+        cache: 'no-store',
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json?.result) {
+          const parsed = typeof json.result === 'string' ? JSON.parse(json.result) : json.result;
+          if (parsed) {
+            memoryDb = {
+              product: { ...DEFAULT_DB.product, ...(parsed.product || {}) },
+              settings: { ...DEFAULT_DB.settings, ...(parsed.settings || {}) },
+              orders: parsed.orders || [],
+              leads: parsed.leads || [],
+            };
+            return memoryDb;
+          }
+        }
+      }
+    } catch (err) {
+      console.error('[KV Fetch Error]:', err);
+    }
+  }
+
+  return getDb();
+}
+
+// Synchronous local saver with background cloud dispatch
 export function saveDb(data: DatabaseSchema): void {
   memoryDb = {
     product: { ...data.product },
@@ -169,61 +264,119 @@ export function saveDb(data: DatabaseSchema): void {
       fs.mkdirSync(LOCAL_DATA_DIR, { recursive: true });
     }
     fs.writeFileSync(LOCAL_DB_FILE, payload, 'utf-8');
-  } catch (e) {
-    // Expected on read-only serverless filesystem
-  }
+  } catch (e) {}
 
   // 2. Try saving to tmp storage (serverless environments)
   try {
     fs.writeFileSync(TMP_DB_FILE, payload, 'utf-8');
-  } catch (e) {
-    // Ignore error
-  }
+  } catch (e) {}
 
-  // 3. Optional Vercel KV / Upstash cloud sync if configured
-  const kvUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-  const kvToken = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (kvUrl && kvToken) {
-    fetch(`${kvUrl}/set/jhthub_db_v1`, {
+  // 3. Background Cloud Sync (Supabase)
+  const supabase = getSupabaseConfig();
+  if (supabase) {
+    fetch(`${supabase.url}/rest/v1/kv_store`, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${kvToken}`,
+        apikey: supabase.key,
+        Authorization: `Bearer ${supabase.key}`,
+        'Content-Type': 'application/json',
+        Prefer: 'resolution=merge-duplicates',
+      },
+      body: JSON.stringify({
+        key: 'jhthub_db',
+        value: memoryDb,
+        updated_at: new Date().toISOString(),
+      }),
+    }).catch((err) => console.error('[Supabase Sync Error]:', err));
+  }
+
+  // 4. Background Cloud Sync (Vercel KV / Upstash)
+  const kv = getKvConfig();
+  if (kv) {
+    fetch(`${kv.url}/set/jhthub_db_v1`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${kv.token}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(payload),
-    }).catch(() => {});
+    }).catch((err) => console.error('[KV Sync Error]:', err));
   }
 }
+
+// Asynchronous Cloud Saver
+export async function saveDbAsync(data: DatabaseSchema): Promise<void> {
+  memoryDb = {
+    product: { ...data.product },
+    settings: { ...data.settings },
+    orders: [...(data.orders || [])],
+    leads: [...(data.leads || [])],
+  };
+
+  const payload = JSON.stringify(memoryDb, null, 2);
+
+  // Local saves
+  try {
+    if (!fs.existsSync(LOCAL_DATA_DIR)) {
+      fs.mkdirSync(LOCAL_DATA_DIR, { recursive: true });
+    }
+    fs.writeFileSync(LOCAL_DB_FILE, payload, 'utf-8');
+  } catch (e) {}
+
+  try {
+    fs.writeFileSync(TMP_DB_FILE, payload, 'utf-8');
+  } catch (e) {}
+
+  // Cloud Save (Supabase)
+  const supabase = getSupabaseConfig();
+  if (supabase) {
+    try {
+      await fetch(`${supabase.url}/rest/v1/kv_store`, {
+        method: 'POST',
+        headers: {
+          apikey: supabase.key,
+          Authorization: `Bearer ${supabase.key}`,
+          'Content-Type': 'application/json',
+          Prefer: 'resolution=merge-duplicates',
+        },
+        body: JSON.stringify({
+          key: 'jhthub_db',
+          value: memoryDb,
+          updated_at: new Date().toISOString(),
+        }),
+      });
+    } catch (err) {
+      console.error('[Supabase Save Error]:', err);
+    }
+  }
+
+  // Cloud Save (KV)
+  const kv = getKvConfig();
+  if (kv) {
+    try {
+      await fetch(`${kv.url}/set/jhthub_db_v1`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${kv.token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+    } catch (err) {
+      console.error('[KV Save Error]:', err);
+    }
+  }
+}
+
+// ----------------- PRODUCT DATA -----------------
 
 export function getProductData(): ProductData {
   return getDb().product;
 }
 
 export async function getProductDataAsync(): Promise<ProductData> {
-  const kvUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-  const kvToken = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (kvUrl && kvToken) {
-    try {
-      const res = await fetch(`${kvUrl}/get/jhthub_db_v1`, {
-        headers: { Authorization: `Bearer ${kvToken}` },
-        cache: 'no-store',
-      });
-      const json = await res.json();
-      if (json?.result) {
-        const parsed = typeof json.result === 'string' ? JSON.parse(json.result) : json.result;
-        if (parsed?.product) {
-          memoryDb = {
-            product: { ...DEFAULT_DB.product, ...parsed.product },
-            settings: { ...DEFAULT_DB.settings, ...(parsed.settings || {}) },
-            orders: parsed.orders || [],
-            leads: parsed.leads || [],
-          };
-          return memoryDb.product;
-        }
-      }
-    } catch (e) {}
-  }
-  return getDb().product;
+  const db = await getDbAsync();
+  return db.product;
 }
 
 export function updateProductData(product: Partial<ProductData>): ProductData {
@@ -233,35 +386,22 @@ export function updateProductData(product: Partial<ProductData>): ProductData {
   return db.product;
 }
 
+export async function updateProductDataAsync(product: Partial<ProductData>): Promise<ProductData> {
+  const db = await getDbAsync();
+  db.product = { ...db.product, ...product };
+  await saveDbAsync(db);
+  return db.product;
+}
+
+// ----------------- SETTINGS -----------------
+
 export function getSettings(): StoreSettings {
   return getDb().settings;
 }
 
 export async function getSettingsAsync(): Promise<StoreSettings> {
-  const kvUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-  const kvToken = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (kvUrl && kvToken) {
-    try {
-      const res = await fetch(`${kvUrl}/get/jhthub_db_v1`, {
-        headers: { Authorization: `Bearer ${kvToken}` },
-        cache: 'no-store',
-      });
-      const json = await res.json();
-      if (json?.result) {
-        const parsed = typeof json.result === 'string' ? JSON.parse(json.result) : json.result;
-        if (parsed?.settings) {
-          memoryDb = {
-            product: { ...DEFAULT_DB.product, ...(parsed.product || {}) },
-            settings: { ...DEFAULT_DB.settings, ...parsed.settings },
-            orders: parsed.orders || [],
-            leads: parsed.leads || [],
-          };
-          return memoryDb.settings;
-        }
-      }
-    } catch (e) {}
-  }
-  return getDb().settings;
+  const db = await getDbAsync();
+  return db.settings;
 }
 
 export function updateSettings(settings: Partial<StoreSettings>): StoreSettings {
@@ -271,10 +411,22 @@ export function updateSettings(settings: Partial<StoreSettings>): StoreSettings 
   return db.settings;
 }
 
+export async function updateSettingsAsync(settings: Partial<StoreSettings>): Promise<StoreSettings> {
+  const db = await getDbAsync();
+  db.settings = { ...db.settings, ...settings };
+  await saveDbAsync(db);
+  return db.settings;
+}
+
 // ----------------- ORDERS -----------------
 
 export function getOrders(): Order[] {
   return getDb().orders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
+export async function getOrdersAsync(): Promise<Order[]> {
+  const db = await getDbAsync();
+  return (db.orders || []).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
 export function getOrderById(id: string): Order | undefined {
@@ -282,10 +434,15 @@ export function getOrderById(id: string): Order | undefined {
   return getDb().orders.find((o) => (o.id || '').trim().toLowerCase() === targetId);
 }
 
+export async function getOrderByIdAsync(id: string): Promise<Order | undefined> {
+  const db = await getDbAsync();
+  const targetId = (id || '').trim().toLowerCase();
+  return (db.orders || []).find((o) => (o.id || '').trim().toLowerCase() === targetId);
+}
+
 export function createOrder(orderInput: Omit<Order, 'id' | 'createdAt' | 'updatedAt' | 'status'>): Order {
   const db = getDb();
   
-  // Calculate next sequential ID to prevent collisions even if orders were deleted
   const existingNums = (db.orders || []).map((o) => {
     const num = parseInt((o.id || '').replace(/[^0-9]/g, ''), 10);
     return isNaN(num) ? 1000 : num;
@@ -302,7 +459,6 @@ export function createOrder(orderInput: Omit<Order, 'id' | 'createdAt' | 'update
   };
   db.orders.unshift(newOrder);
 
-  // Automatically remove matching lead from leads list since order is now completed
   const cleanPhone = (orderInput.phone || '').replace(/[^0-9]/g, '');
   db.leads = (db.leads || []).filter((l) => {
     const leadCleanPhone = (l.phone || '').replace(/[^0-9]/g, '');
@@ -311,6 +467,38 @@ export function createOrder(orderInput: Omit<Order, 'id' | 'createdAt' | 'update
   });
 
   saveDb(db);
+  return newOrder;
+}
+
+export async function createOrderAsync(orderInput: Omit<Order, 'id' | 'createdAt' | 'updatedAt' | 'status'>): Promise<Order> {
+  const db = await getDbAsync();
+  db.orders = db.orders || [];
+  db.leads = db.leads || [];
+
+  const existingNums = db.orders.map((o) => {
+    const num = parseInt((o.id || '').replace(/[^0-9]/g, ''), 10);
+    return isNaN(num) ? 1000 : num;
+  });
+  const maxNum = existingNums.length > 0 ? Math.max(1000, ...existingNums) : 1000;
+  const nextNum = maxNum + 1;
+  
+  const newOrder: Order = {
+    ...orderInput,
+    id: `JHT-${nextNum}`,
+    status: 'pending',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+  db.orders.unshift(newOrder);
+
+  const cleanPhone = (orderInput.phone || '').replace(/[^0-9]/g, '');
+  db.leads = db.leads.filter((l) => {
+    const leadCleanPhone = (l.phone || '').replace(/[^0-9]/g, '');
+    const isMatch = leadCleanPhone === cleanPhone || (cleanPhone.length >= 10 && leadCleanPhone.slice(-10) === cleanPhone.slice(-10));
+    return !isMatch;
+  });
+
+  await saveDbAsync(db);
   return newOrder;
 }
 
@@ -325,6 +513,18 @@ export function updateOrderStatus(id: string, status: Order['status']): Order | 
   return db.orders[index];
 }
 
+export async function updateOrderStatusAsync(id: string, status: Order['status']): Promise<Order | null> {
+  const db = await getDbAsync();
+  db.orders = db.orders || [];
+  const targetId = (id || '').trim().toLowerCase();
+  const index = db.orders.findIndex((o) => (o.id || '').trim().toLowerCase() === targetId);
+  if (index === -1) return null;
+  db.orders[index].status = status;
+  db.orders[index].updatedAt = new Date().toISOString();
+  await saveDbAsync(db);
+  return db.orders[index];
+}
+
 export function deleteOrder(id: string): boolean {
   const db = getDb();
   const targetId = (id || '').trim().toLowerCase();
@@ -332,6 +532,19 @@ export function deleteOrder(id: string): boolean {
   db.orders = db.orders.filter((o) => (o.id || '').trim().toLowerCase() !== targetId);
   if (db.orders.length !== initialLength) {
     saveDb(db);
+    return true;
+  }
+  return false;
+}
+
+export async function deleteOrderAsync(id: string): Promise<boolean> {
+  const db = await getDbAsync();
+  db.orders = db.orders || [];
+  const targetId = (id || '').trim().toLowerCase();
+  const initialLength = db.orders.length;
+  db.orders = db.orders.filter((o) => (o.id || '').trim().toLowerCase() !== targetId);
+  if (db.orders.length !== initialLength) {
+    await saveDbAsync(db);
     return true;
   }
   return false;
@@ -350,8 +563,27 @@ export function getLeads(): Lead[] {
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
+export async function getLeadsAsync(): Promise<Lead[]> {
+  const db = await getDbAsync();
+  db.orders = db.orders || [];
+  db.leads = db.leads || [];
+  const orderPhones = new Set(db.orders.map((o) => (o.phone || '').replace(/[^0-9]/g, '').slice(-10)));
+  return db.leads
+    .filter((l) => {
+      const leadPhone = (l.phone || '').replace(/[^0-9]/g, '').slice(-10);
+      return !orderPhones.has(leadPhone) && l.status !== 'converted';
+    })
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
 export function getLeadById(id: string): Lead | undefined {
   const db = getDb();
+  const targetId = (id || '').trim().toLowerCase();
+  return (db.leads || []).find((l) => (l.id || '').trim().toLowerCase() === targetId);
+}
+
+export async function getLeadByIdAsync(id: string): Promise<Lead | undefined> {
+  const db = await getDbAsync();
   const targetId = (id || '').trim().toLowerCase();
   return (db.leads || []).find((l) => (l.id || '').trim().toLowerCase() === targetId);
 }
@@ -379,14 +611,12 @@ export function createOrUpdateLead(leadInput: {
     throw new Error('Valid phone number with at least 10 digits is required');
   }
 
-  // Check if customer already placed an order with this phone - if so, do NOT create/keep a lead
-  const hasCompletedOrder = db.orders.some((o) => {
+  const hasCompletedOrder = (db.orders || []).some((o) => {
     const orderPhone = (o.phone || '').replace(/[^0-9]/g, '');
     return orderPhone === cleanPhone || (orderPhone.slice(-10) === cleanPhone.slice(-10) && cleanPhone.length >= 10);
   });
 
   if (hasCompletedOrder) {
-    // Remove any existing lead with this phone number as they already have a completed order
     const initialLen = db.leads.length;
     db.leads = db.leads.filter((l) => {
       const p = (l.phone || '').replace(/[^0-9]/g, '');
@@ -398,7 +628,6 @@ export function createOrUpdateLead(leadInput: {
     return { lead: null, isNew: false };
   }
 
-  // Check for existing lead with same phone
   const existingIndex = db.leads.findIndex((l) => {
     const p = (l.phone || '').replace(/[^0-9]/g, '');
     return p === cleanPhone || (p.length >= 10 && p.slice(-10) === cleanPhone.slice(-10));
@@ -450,6 +679,98 @@ export function createOrUpdateLead(leadInput: {
   return { lead: newLead, isNew: true };
 }
 
+export async function createOrUpdateLeadAsync(leadInput: {
+  phone: string;
+  customerName?: string;
+  address?: string;
+  cityZone?: 'dhaka' | 'outside';
+  selectedPackage?: {
+    id: string;
+    name: string;
+    banglaName: string;
+    price: number;
+  };
+  quantity?: number;
+  source?: string;
+  notes?: string;
+}): Promise<{ lead: Lead | null; isNew: boolean }> {
+  const db = await getDbAsync();
+  db.orders = db.orders || [];
+  db.leads = db.leads || [];
+
+  const cleanPhone = (leadInput.phone || '').replace(/[^0-9]/g, '');
+  if (!cleanPhone || cleanPhone.length < 10) {
+    throw new Error('Valid phone number with at least 10 digits is required');
+  }
+
+  const hasCompletedOrder = db.orders.some((o) => {
+    const orderPhone = (o.phone || '').replace(/[^0-9]/g, '');
+    return orderPhone === cleanPhone || (orderPhone.slice(-10) === cleanPhone.slice(-10) && cleanPhone.length >= 10);
+  });
+
+  if (hasCompletedOrder) {
+    const initialLen = db.leads.length;
+    db.leads = db.leads.filter((l) => {
+      const p = (l.phone || '').replace(/[^0-9]/g, '');
+      return !(p === cleanPhone || (p.slice(-10) === cleanPhone.slice(-10) && cleanPhone.length >= 10));
+    });
+    if (db.leads.length !== initialLen) {
+      await saveDbAsync(db);
+    }
+    return { lead: null, isNew: false };
+  }
+
+  const existingIndex = db.leads.findIndex((l) => {
+    const p = (l.phone || '').replace(/[^0-9]/g, '');
+    return p === cleanPhone || (p.length >= 10 && p.slice(-10) === cleanPhone.slice(-10));
+  });
+
+  if (existingIndex !== -1) {
+    const existing = db.leads[existingIndex];
+    const updated: Lead = {
+      ...existing,
+      customerName: leadInput.customerName?.trim() || existing.customerName,
+      address: leadInput.address?.trim() || existing.address,
+      cityZone: leadInput.cityZone || existing.cityZone,
+      selectedPackage: leadInput.selectedPackage || existing.selectedPackage,
+      quantity: leadInput.quantity || existing.quantity || 1,
+      source: leadInput.source || existing.source || 'checkout_form',
+      notes: leadInput.notes || existing.notes,
+      updatedAt: new Date().toISOString()
+    };
+    db.leads[existingIndex] = updated;
+    await saveDbAsync(db);
+    return { lead: updated, isNew: false };
+  }
+
+  const existingLeadNums = db.leads.map((l) => {
+    const num = parseInt((l.id || '').replace(/[^0-9]/g, ''), 10);
+    return isNaN(num) ? 1000 : num;
+  });
+  const maxLeadNum = existingLeadNums.length > 0 ? Math.max(1000, ...existingLeadNums) : 1000;
+  const nextLeadNum = maxLeadNum + 1;
+
+  const newLead: Lead = {
+    id: `LD-${nextLeadNum}`,
+    phone: cleanPhone,
+    customerName: leadInput.customerName?.trim() || '',
+    address: leadInput.address?.trim() || '',
+    cityZone: leadInput.cityZone,
+    selectedPackage: leadInput.selectedPackage,
+    quantity: leadInput.quantity || 1,
+    status: 'abandoned',
+    notes: leadInput.notes || '',
+    callCount: 0,
+    source: leadInput.source || 'checkout_form',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  db.leads.unshift(newLead);
+  await saveDbAsync(db);
+  return { lead: newLead, isNew: true };
+}
+
 export function updateLead(
   id: string,
   updates: Partial<Pick<Lead, 'status' | 'notes' | 'callCount' | 'customerName' | 'address' | 'cityZone'>>
@@ -466,6 +787,25 @@ export function updateLead(
     updatedAt: new Date().toISOString()
   };
   saveDb(db);
+  return db.leads[index];
+}
+
+export async function updateLeadAsync(
+  id: string,
+  updates: Partial<Pick<Lead, 'status' | 'notes' | 'callCount' | 'customerName' | 'address' | 'cityZone'>>
+): Promise<Lead | null> {
+  const db = await getDbAsync();
+  db.leads = db.leads || [];
+  const targetId = (id || '').trim().toLowerCase();
+  const index = db.leads.findIndex((l) => (l.id || '').trim().toLowerCase() === targetId);
+  if (index === -1) return null;
+
+  db.leads[index] = {
+    ...db.leads[index],
+    ...updates,
+    updatedAt: new Date().toISOString()
+  };
+  await saveDbAsync(db);
   return db.leads[index];
 }
 
@@ -491,6 +831,28 @@ export function recordLeadCall(id: string, notes?: string): Lead | null {
   return db.leads[index];
 }
 
+export async function recordLeadCallAsync(id: string, notes?: string): Promise<Lead | null> {
+  const db = await getDbAsync();
+  db.leads = db.leads || [];
+  const targetId = (id || '').trim().toLowerCase();
+  const index = db.leads.findIndex((l) => (l.id || '').trim().toLowerCase() === targetId);
+  if (index === -1) return null;
+
+  const current = db.leads[index];
+  const newCallCount = (current.callCount || 0) + 1;
+  
+  db.leads[index] = {
+    ...current,
+    callCount: newCallCount,
+    lastContactedAt: new Date().toISOString(),
+    status: current.status === 'abandoned' ? 'contacted' : current.status,
+    notes: notes !== undefined ? notes : current.notes,
+    updatedAt: new Date().toISOString()
+  };
+  await saveDbAsync(db);
+  return db.leads[index];
+}
+
 export function deleteLead(id: string): boolean {
   const db = getDb();
   db.leads = db.leads || [];
@@ -499,6 +861,19 @@ export function deleteLead(id: string): boolean {
   db.leads = db.leads.filter((l) => (l.id || '').trim().toLowerCase() !== targetId);
   if (db.leads.length !== initialLength) {
     saveDb(db);
+    return true;
+  }
+  return false;
+}
+
+export async function deleteLeadAsync(id: string): Promise<boolean> {
+  const db = await getDbAsync();
+  db.leads = db.leads || [];
+  const targetId = (id || '').trim().toLowerCase();
+  const initialLength = db.leads.length;
+  db.leads = db.leads.filter((l) => (l.id || '').trim().toLowerCase() !== targetId);
+  if (db.leads.length !== initialLength) {
+    await saveDbAsync(db);
     return true;
   }
   return false;

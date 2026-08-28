@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
-import { createOrder, getOrders, getSettings } from '@/lib/db';
+import { createOrderAsync, getOrdersAsync, getSettingsAsync } from '@/lib/db';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const orders = getOrders();
+    const orders = await getOrdersAsync();
     return NextResponse.json({ success: true, orders });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
@@ -21,7 +23,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const order = createOrder({
+    const order = await createOrderAsync({
       customerName: body.customerName,
       phone: body.phone,
       address: body.address,
@@ -34,7 +36,7 @@ export async function POST(request: Request) {
       notes: body.notes || '',
     });
 
-    const settings = getSettings();
+    const settings = await getSettingsAsync();
 
     return NextResponse.json({ success: true, order, settings }, { status: 201 });
   } catch (error: any) {
