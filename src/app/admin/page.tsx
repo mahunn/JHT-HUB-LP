@@ -29,8 +29,8 @@ export default function AdminDashboardPage() {
   const fetchData = async () => {
     try {
       const [resOrders, resLeads] = await Promise.all([
-        fetch('/api/orders'),
-        fetch('/api/leads'),
+        fetch('/api/orders', { cache: 'no-store' }),
+        fetch('/api/leads', { cache: 'no-store' }),
       ]);
       const dataOrders = await resOrders.json();
       const dataLeads = await resLeads.json();
@@ -333,17 +333,23 @@ export default function AdminDashboardPage() {
                       >
                         <Phone className="w-4 h-4" />
                       </a>
-                      <a
-                        href={`https://wa.me/${order.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
-                          `আসসালামু আলাইকুম ${order.customerName}, আপনার অর্ডারটি (${order.id} - ${order.selectedPackage?.banglaName}) কনফার্ম করার জন্য যোগাযোগ করছি।`
-                        )}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title="হোয়াটসঅ্যাপে মেসেজ পাঠান"
-                        className="p-1.5 rounded-lg bg-green-100 hover:bg-green-200 text-green-700 transition-colors"
-                      >
-                        <MessageCircle className="w-4 h-4" />
-                      </a>
+                      {(() => {
+                        let clean = (order.phone || '').replace(/[^0-9]/g, '');
+                        if (clean.startsWith('01')) clean = '88' + clean;
+                        return (
+                          <a
+                            href={`https://wa.me/${clean}?text=${encodeURIComponent(
+                              `আসসালামু আলাইকুম ${order.customerName}, আপনার অর্ডারটি (${order.id} - ${order.selectedPackage?.banglaName || ''}) কনফার্ম করার জন্য যোগাযোগ করছি।`
+                            )}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="হোয়াটসঅ্যাপে মেসেজ পাঠান"
+                            className="p-1.5 rounded-lg bg-green-100 hover:bg-green-200 text-green-700 transition-colors"
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                          </a>
+                        );
+                      })()}
                     </div>
                   </td>
                 </tr>

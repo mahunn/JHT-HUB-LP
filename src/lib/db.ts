@@ -278,15 +278,24 @@ export function getOrders(): Order[] {
 }
 
 export function getOrderById(id: string): Order | undefined {
-  return getDb().orders.find((o) => o.id === id);
+  const targetId = (id || '').trim().toLowerCase();
+  return getDb().orders.find((o) => (o.id || '').trim().toLowerCase() === targetId);
 }
 
 export function createOrder(orderInput: Omit<Order, 'id' | 'createdAt' | 'updatedAt' | 'status'>): Order {
   const db = getDb();
-  const nextNum = 1000 + db.orders.length + 1;
+  
+  // Calculate next sequential ID to prevent collisions even if orders were deleted
+  const existingNums = (db.orders || []).map((o) => {
+    const num = parseInt((o.id || '').replace(/[^0-9]/g, ''), 10);
+    return isNaN(num) ? 1000 : num;
+  });
+  const maxNum = existingNums.length > 0 ? Math.max(1000, ...existingNums) : 1000;
+  const nextNum = maxNum + 1;
+  
   const newOrder: Order = {
     ...orderInput,
-    id: `HR-${nextNum}`,
+    id: `JHT-${nextNum}`,
     status: 'pending',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
@@ -294,9 +303,9 @@ export function createOrder(orderInput: Omit<Order, 'id' | 'createdAt' | 'update
   db.orders.unshift(newOrder);
 
   // Automatically remove matching lead from leads list since order is now completed
-  const cleanPhone = orderInput.phone.replace(/[^0-9]/g, '');
+  const cleanPhone = (orderInput.phone || '').replace(/[^0-9]/g, '');
   db.leads = (db.leads || []).filter((l) => {
-    const leadCleanPhone = l.phone.replace(/[^0-9]/g, '');
+    const leadCleanPhone = (l.phone || '').replace(/[^0-9]/g, '');
     const isMatch = leadCleanPhone === cleanPhone || (cleanPhone.length >= 10 && leadCleanPhone.slice(-10) === cleanPhone.slice(-10));
     return !isMatch;
   });
@@ -307,7 +316,8 @@ export function createOrder(orderInput: Omit<Order, 'id' | 'createdAt' | 'update
 
 export function updateOrderStatus(id: string, status: Order['status']): Order | null {
   const db = getDb();
-  const index = db.orders.findIndex((o) => o.id === id);
+  const targetId = (id || '').trim().toLowerCase();
+  const index = db.orders.findIndex((o) => (o.id || '').trim().toLowerCase() === targetId);
   if (index === -1) return null;
   db.orders[index].status = status;
   db.orders[index].updatedAt = new Date().toISOString();
@@ -331,10 +341,10 @@ export function deleteOrder(id: string): boolean {
 
 export function getLeads(): Lead[] {
   const db = getDb();
-  const orderPhones = new Set(db.orders.map((o) => o.phone.replace(/[^0-9]/g, '').slice(-10)));
+  const orderPhones = new Set(db.orders.map((o) => (o.phone || '').replace(/[^0-9]/g, '').slice(-10)));
   return (db.leads || [])
     .filter((l) => {
-      const leadPhone = l.phone.replace(/[^0-9]/g, '').slice(-10);
+      const leadPhone = (l.phone || '').replace(/[^0-9]/g, '').slice(-10);
       return !orderPhones.has(leadPhone) && l.status !== 'converted';
     })
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -342,7 +352,8 @@ export function getLeads(): Lead[] {
 
 export function getLeadById(id: string): Lead | undefined {
   const db = getDb();
-  return (db.leads || []).find((l) => l.id === id);
+  const targetId = (id || '').trim().toLowerCase();
+  return (db.leads || []).find((l) => (l.id || '').trim().toLowerCase() === targetId);
 }
 
 export function createOrUpdateLead(leadInput: {
@@ -370,7 +381,7 @@ export function createOrUpdateLead(leadInput: {
 
   // Check if customer already placed an order with this phone - if so, do NOT create/keep a lead
   const hasCompletedOrder = db.orders.some((o) => {
-    const orderPhone = o.phone.replace(/[^0-9]/g, '');
+    const orderPhone = (o.phone || '').replace(/[^0-9]/g, '');
     return orderPhone === cleanPhone || (orderPhone.slice(-10) === cleanPhone.slice(-10) && cleanPhone.length >= 10);
   });
 
@@ -378,7 +389,7 @@ export function createOrUpdateLead(leadInput: {
     // Remove any existing lead with this phone number as they already have a completed order
     const initialLen = db.leads.length;
     db.leads = db.leads.filter((l) => {
-      const p = l.phone.replace(/[^0-9]/g, '');
+      const p = (l.phone || '').replace(/[^0-9]/g, '');
       return !(p === cleanPhone || (p.slice(-10) === cleanPhone.slice(-10) && cleanPhone.length >= 10));
     });
     if (db.leads.length !== initialLen) {
@@ -389,7 +400,7 @@ export function createOrUpdateLead(leadInput: {
 
   // Check for existing lead with same phone
   const existingIndex = db.leads.findIndex((l) => {
-    const p = l.phone.replace(/[^0-9]/g, '');
+    const p = (l.phone || '').replace(/[^0-9]/g, '');
     return p === cleanPhone || (p.length >= 10 && p.slice(-10) === cleanPhone.slice(-10));
   });
 
@@ -411,9 +422,15 @@ export function createOrUpdateLead(leadInput: {
     return { lead: updated, isNew: false };
   }
 
-  const nextNum = 1000 + db.leads.length + 1;
+  const existingLeadNums = db.leads.map((l) => {
+    const num = parseInt((l.id || '').replace(/[^0-9]/g, ''), 10);
+    return isNaN(num) ? 1000 : num;
+  });
+  const maxLeadNum = existingLeadNums.length > 0 ? Math.max(1000, ...existingLeadNums) : 1000;
+  const nextLeadNum = maxLeadNum + 1;
+
   const newLead: Lead = {
-    id: `LD-${nextNum}`,
+    id: `LD-${nextLeadNum}`,
     phone: cleanPhone,
     customerName: leadInput.customerName?.trim() || '',
     address: leadInput.address?.trim() || '',
@@ -439,7 +456,8 @@ export function updateLead(
 ): Lead | null {
   const db = getDb();
   db.leads = db.leads || [];
-  const index = db.leads.findIndex((l) => l.id === id);
+  const targetId = (id || '').trim().toLowerCase();
+  const index = db.leads.findIndex((l) => (l.id || '').trim().toLowerCase() === targetId);
   if (index === -1) return null;
 
   db.leads[index] = {
@@ -454,7 +472,8 @@ export function updateLead(
 export function recordLeadCall(id: string, notes?: string): Lead | null {
   const db = getDb();
   db.leads = db.leads || [];
-  const index = db.leads.findIndex((l) => l.id === id);
+  const targetId = (id || '').trim().toLowerCase();
+  const index = db.leads.findIndex((l) => (l.id || '').trim().toLowerCase() === targetId);
   if (index === -1) return null;
 
   const current = db.leads[index];

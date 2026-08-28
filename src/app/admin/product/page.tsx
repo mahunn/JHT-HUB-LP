@@ -23,10 +23,19 @@ export default function AdminProductPage() {
   const [product, setProduct] = useState<ProductData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
+  const [uploadingImage, setUploadingImage] = useState<boolean>(false);
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [newImageUrl, setNewImageUrl] = useState<string>('');
+  const [isDirty, setIsDirty] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'general' | 'images' | 'packages' | 'scents' | 'reviews' | 'delivery'>('general');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
 
   useEffect(() => {
     fetchProduct();
@@ -34,7 +43,7 @@ export default function AdminProductPage() {
 
   const fetchProduct = async () => {
     try {
-      const res = await fetch('/api/product');
+      const res = await fetch('/api/product', { cache: 'no-store' });
       const data = await res.json();
       if (data.success) {
         setProduct(data.product);
@@ -46,16 +55,14 @@ export default function AdminProductPage() {
     }
   };
 
-  const handleSave = async () => {
-    if (!product) return;
+  // Direct save helper that automatically persists to backend and local storage
+  const saveProductDirectly = async (updatedProduct: ProductData, successMsg?: string) => {
     setSaving(true);
-    setSaveSuccess(false);
-
     try {
       const res = await fetch('/api/product', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(product),
+        body: JSON.stringify(updatedProduct),
       });
       const data = await res.json();
       if (data.success) {
@@ -63,14 +70,27 @@ export default function AdminProductPage() {
         try {
           localStorage.setItem('jht_cached_product', JSON.stringify(data.product));
         } catch (e) {}
+        setIsDirty(false);
         setSaveSuccess(true);
+        if (successMsg) {
+          showToast(successMsg);
+        }
         setTimeout(() => setSaveSuccess(false), 3000);
+      } else {
+        alert(data.error || 'সেভ করতে সমস্যা হয়েছে।');
       }
     } catch (e) {
       console.error(e);
+      alert('সার্ভার এরর: সেভ করা যায়নি।');
     } finally {
       setSaving(false);
+      setUploadingImage(false);
     }
+  };
+
+  const handleSave = async () => {
+    if (!product) return;
+    await saveProductDirectly(product, 'সকল পরিবর্তন সফলভাবে সেভ হয়েছে! 🎉');
   };
 
   const compressImage = (file: File): Promise<string> => {
@@ -82,7 +102,7 @@ export default function AdminProductPage() {
         img.src = event.target?.result as string;
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const maxDimension = 1200;
+          const maxDimension = 1000;
           let width = img.width;
           let height = img.height;
           if (width > height) {
@@ -104,7 +124,7 @@ export default function AdminProductPage() {
             return;
           }
           ctx.drawImage(img, 0, 0, width, height);
-          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.80);
           resolve(compressedDataUrl);
         };
         img.onerror = () => resolve(event.target?.result as string);
@@ -118,50 +138,75 @@ export default function AdminProductPage() {
     if (!files || files.length === 0 || !product) return;
 
     const file = files[0];
+    setUploadingImage(true);
 
     try {
-      // 1. Compress image client-side to lightweight Data URL (guaranteed to work on phones & Vercel)
+      // 1. Compress image client-side to lightweight Data URL
       const compressedDataUrl = await compressImage(file);
-      if (!compressedDataUrl) return;
+      if (!compressedDataUrl) {
+        setUploadingImage(false);
+        return;
+      }
 
-      setProduct((prev) => {
-        if (!prev) return prev;
-        const currentGallery = prev.galleryImages || [];
-        const isFirst = currentGallery.length === 0 || !prev.mainBannerImage;
-        return {
-          ...prev,
-          mainBannerImage: isFirst ? compressedDataUrl : prev.mainBannerImage,
-          galleryImages: [...currentGallery, compressedDataUrl],
-        };
-      });
+      const currentGallery = product.galleryImages || [];
+      const isFirst = currentGallery.length === 0 || !product.mainBannerImage;
+      const updatedProduct: ProductData = {
+        ...product,
+        mainBannerImage: isFirst ? compressedDataUrl : product.mainBannerImage,
+        galleryImages: [...currentGallery, compressedDataUrl],
+      };
+
+      setProduct(updatedProduct);
+      // Auto-save immediately to server so image is NEVER lost!
+      await saveProductDirectly(updatedProduct, 'ছবি সফলভাবে আপলোড ও সেভ হয়েছে! 🎉');
 
       // Reset input value so same file can be selected again
       e.target.value = '';
     } catch (e) {
       console.error('Image upload failed', e);
+      setUploadingImage(false);
     }
   };
 
-  const setAsMainImage = (imgUrl: string) => {
+  const handleAddImageUrl = async () => {
+    if (!newImageUrl.trim() || !product) return;
+    const url = newImageUrl.trim();
+    const currentGallery = product.galleryImages || [];
+    const isFirst = currentGallery.length === 0 || !product.mainBannerImage;
+    const updatedProduct: ProductData = {
+      ...product,
+      mainBannerImage: isFirst ? url : product.mainBannerImage,
+      galleryImages: [...currentGallery, url],
+    };
+    setProduct(updatedProduct);
+    setNewImageUrl('');
+    await saveProductDirectly(updatedProduct, 'নতুন ছবির লিংক যুক্ত ও সেভ হয়েছে! 🎉');
+  };
+
+  const setAsMainImage = async (imgUrl: string) => {
     if (!product) return;
     const filtered = (product.galleryImages || []).filter((img) => img !== imgUrl);
-    setProduct({
+    const updatedProduct: ProductData = {
       ...product,
       mainBannerImage: imgUrl,
       galleryImages: [imgUrl, ...filtered],
-    });
+    };
+    setProduct(updatedProduct);
+    await saveProductDirectly(updatedProduct, 'মূল ছবি (ডিফল্ট) হিসেবে সেট ও সেভ হয়েছে! ⭐');
   };
 
-  const removeImage = (index: number) => {
+  const removeImage = async (index: number) => {
     if (!product) return;
     const updated = [...(product.galleryImages || [])];
     const removed = updated.splice(index, 1)[0];
     const nextMain = product.mainBannerImage === removed ? (updated[0] || '') : product.mainBannerImage;
-    setProduct({
+    const updatedProduct: ProductData = {
       ...product,
       mainBannerImage: nextMain,
       galleryImages: updated,
-    });
+    };
+    setProduct(updatedProduct);
+    await saveProductDirectly(updatedProduct, 'ছবি সফলভাবে মুছে ফেলা হয়েছে! 🗑️');
   };
 
   const handlePackageImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, pkgId: string) => {
@@ -171,7 +216,12 @@ export default function AdminProductPage() {
     try {
       const compressedDataUrl = await compressImage(files[0]);
       if (compressedDataUrl) {
-        updatePackage(pkgId, { image: compressedDataUrl });
+        const updatedPackages = product.packages.map((p) =>
+          p.id === pkgId ? { ...p, image: compressedDataUrl } : p
+        );
+        const updatedProduct = { ...product, packages: updatedPackages };
+        setProduct(updatedProduct);
+        await saveProductDirectly(updatedProduct, 'প্যাকেজের ছবি সফলভাবে আপলোড ও সেভ হয়েছে! 📦');
       }
       e.target.value = '';
     } catch (e) {
@@ -193,23 +243,27 @@ export default function AdminProductPage() {
       badge: 'অফার 🔥',
       isDefault: false,
     };
-    setProduct({
+    const updatedProduct = {
       ...product,
       packages: [...product.packages, newPkg],
-    });
+    };
+    setProduct(updatedProduct);
+    setIsDirty(true);
   };
 
   const removePackage = (id: string) => {
     if (!product) return;
-    setProduct({
+    const updatedProduct = {
       ...product,
       packages: product.packages.filter((p) => p.id !== id),
-    });
+    };
+    setProduct(updatedProduct);
+    setIsDirty(true);
   };
 
   const updatePackage = (id: string, updates: Partial<ComboPackage>) => {
     if (!product) return;
-    setProduct({
+    const updatedProduct = {
       ...product,
       packages: product.packages.map((p) => {
         if (p.id === id) {
@@ -220,7 +274,9 @@ export default function AdminProductPage() {
         }
         return p;
       }),
-    });
+    };
+    setProduct(updatedProduct);
+    setIsDirty(true);
   };
 
   // Scents helper
@@ -232,18 +288,22 @@ export default function AdminProductPage() {
       category,
       notes: 'মন মাতানো সুবাস',
     };
-    setProduct({
+    const updatedProduct = {
       ...product,
       scents: [...product.scents, newScent],
-    });
+    };
+    setProduct(updatedProduct);
+    setIsDirty(true);
   };
 
   const removeScent = (id: string) => {
     if (!product) return;
-    setProduct({
+    const updatedProduct = {
       ...product,
       scents: product.scents.filter((s) => s.id !== id),
-    });
+    };
+    setProduct(updatedProduct);
+    setIsDirty(true);
   };
 
   // Customer Reviews helper
@@ -282,7 +342,15 @@ export default function AdminProductPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="space-y-6 max-w-5xl relative pb-20">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed top-5 right-5 z-50 bg-slate-900 text-white text-sm font-bold px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-2.5 border border-emerald-500/40 animate-bounce">
+          <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
       {/* Top Header & Save Button */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm sticky top-4 z-20">
         <div>
@@ -301,7 +369,7 @@ export default function AdminProductPage() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-6 py-2.5 rounded-xl text-sm transition-all shadow flex items-center gap-2"
+            className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-extrabold px-6 py-2.5 rounded-xl text-sm transition-all shadow flex items-center gap-2"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             <span>পরিবর্তন সেভ করুন</span>
@@ -352,7 +420,10 @@ export default function AdminProductPage() {
               <input
                 type="text"
                 value={product.brandName}
-                onChange={(e) => setProduct({ ...product, brandName: e.target.value })}
+                onChange={(e) => {
+                  setProduct({ ...product, brandName: e.target.value });
+                  setIsDirty(true);
+                }}
                 className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
               />
             </div>
@@ -362,57 +433,88 @@ export default function AdminProductPage() {
               <input
                 type="text"
                 value={product.productName}
-                onChange={(e) => setProduct({ ...product, productName: e.target.value })}
+                onChange={(e) => {
+                  setProduct({ ...product, productName: e.target.value });
+                  setIsDirty(true);
+                }}
                 className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">হেডলাইন শুরু (Headline Pre)</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">হেডলাইন শুরু (যেমন: মাত্র ৪৯০ টাকায় পাচ্ছেন)</label>
               <input
                 type="text"
                 value={product.headlinePre}
-                onChange={(e) => setProduct({ ...product, headlinePre: e.target.value })}
+                onChange={(e) => {
+                  setProduct({ ...product, headlinePre: e.target.value });
+                  setIsDirty(true);
+                }}
                 className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">হেডলাইন হাইলাইট (লাল রঙের টেক্সট)</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">হেডলাইন হাইলাইট (যেমন: প্রিমিয়াম ১০ পিস আতর)</label>
               <input
                 type="text"
                 value={product.headlineHighlight}
-                onChange={(e) => setProduct({ ...product, headlineHighlight: e.target.value })}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-red-600 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
+                onChange={(e) => {
+                  setProduct({ ...product, headlineHighlight: e.target.value });
+                  setIsDirty(true);
+                }}
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-emerald-700 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
               />
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-xs font-bold text-slate-700 mb-1">হেডলাইন দ্বিতীয় লাইন (নীল রঙের টেক্সট)</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">হেডলাইন শেষ (যেমন: ১০টি ভিন্ন ভিন্ন ফ্লেভারের আতর পাচ্ছেন)</label>
               <input
                 type="text"
                 value={product.headlinePost}
-                onChange={(e) => setProduct({ ...product, headlinePost: e.target.value })}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-blue-700 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
+                onChange={(e) => {
+                  setProduct({ ...product, headlinePost: e.target.value });
+                  setIsDirty(true);
+                }}
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
               />
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-xs font-bold text-slate-700 mb-1">ফ্রি ডেলিভারি অফার ব্যানার টেক্সট</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">সাব-হেডলাইন (Sub-Headline)</label>
+              <input
+                type="text"
+                value={product.headlineSub}
+                onChange={(e) => {
+                  setProduct({ ...product, headlineSub: e.target.value });
+                  setIsDirty(true);
+                }}
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-xs font-bold text-slate-700 mb-1">ফ্রি ডেলিভারি হাইলাইট টেক্সট</label>
               <input
                 type="text"
                 value={product.freeDeliveryHeadline}
-                onChange={(e) => setProduct({ ...product, freeDeliveryHeadline: e.target.value })}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-amber-700 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
+                onChange={(e) => {
+                  setProduct({ ...product, freeDeliveryHeadline: e.target.value });
+                  setIsDirty(true);
+                }}
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">সীমিত স্টক সংখ্যা (Stock Count)</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">স্টক কাউন্ট (Stock Count)</label>
               <input
                 type="number"
                 value={product.stockCount}
-                onChange={(e) => setProduct({ ...product, stockCount: parseInt(e.target.value) || 0 })}
+                onChange={(e) => {
+                  setProduct({ ...product, stockCount: parseInt(e.target.value) || 0 });
+                  setIsDirty(true);
+                }}
                 className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
               />
             </div>
@@ -422,7 +524,10 @@ export default function AdminProductPage() {
               <input
                 type="number"
                 value={product.countdownHours}
-                onChange={(e) => setProduct({ ...product, countdownHours: parseInt(e.target.value) || 1 })}
+                onChange={(e) => {
+                  setProduct({ ...product, countdownHours: parseInt(e.target.value) || 1 });
+                  setIsDirty(true);
+                }}
                 className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
               />
             </div>
@@ -441,7 +546,7 @@ export default function AdminProductPage() {
                 <span>ছবি ও গ্যালারি ম্যানেজমেন্ট</span>
               </h2>
               <p className="text-xs text-slate-500 mt-1">
-                ছবি আপলোড করুন এবং যেকোনো ছবিকে <span className="font-bold text-emerald-700">"ডিফল্ট / মূল ছবি"</span> হিসেবে সেট করুন
+                ছবি আপলোড করুন বা লিংক দিন। আপলোড করার সাথে সাথে তা <span className="font-bold text-emerald-700">স্বয়ংক্রিয়ভাবে সেভ</span> হয়ে যাবে।
               </p>
             </div>
 
@@ -455,13 +560,43 @@ export default function AdminProductPage() {
               />
               <button
                 type="button"
+                disabled={uploadingImage}
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-extrabold px-5 py-2.5 rounded-xl text-sm transition-all shadow flex items-center justify-center gap-2"
+                className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 active:scale-95 disabled:opacity-60 text-white font-extrabold px-5 py-2.5 rounded-xl text-sm transition-all shadow flex items-center justify-center gap-2"
               >
-                <Upload className="w-4 h-4" />
-                <span>নতুন ছবি আপলোড করুন</span>
+                {uploadingImage ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>ছবি সেভ হচ্ছে...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4" />
+                    <span>নতুন ছবি আপলোড করুন</span>
+                  </>
+                )}
               </button>
             </div>
+          </div>
+
+          {/* Add Image by URL row */}
+          <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex flex-col sm:flex-row items-center gap-2.5">
+            <input
+              type="text"
+              value={newImageUrl}
+              onChange={(e) => setNewImageUrl(e.target.value)}
+              placeholder="অথবা সরাসরি ছবির ওয়েব লিংক (URL) পেস্ট করুন..."
+              className="flex-1 w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            />
+            <button
+              type="button"
+              onClick={handleAddImageUrl}
+              disabled={!newImageUrl.trim()}
+              className="w-full sm:w-auto bg-slate-800 hover:bg-slate-900 disabled:opacity-50 text-white font-bold px-4 py-2 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 flex-shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>লিংক যোগ করুন</span>
+            </button>
           </div>
 
           {/* Gallery Grid with Default / Main Selector */}
@@ -981,6 +1116,25 @@ export default function AdminProductPage() {
               )}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Sticky Bottom Save Bar when changes are made */}
+      {isDirty && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900 text-white px-6 py-3.5 rounded-2xl shadow-2xl border border-emerald-500/40 flex items-center gap-4 animate-bounce">
+          <span className="text-xs sm:text-sm font-bold flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
+            আপনার কিছু পরিবর্তন সেভ করা বাকি আছে
+          </span>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-extrabold px-5 py-2 rounded-xl text-xs sm:text-sm transition-all shadow flex items-center gap-1.5"
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            <span>সেভ করুন</span>
+          </button>
         </div>
       )}
     </div>

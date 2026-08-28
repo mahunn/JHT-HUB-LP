@@ -71,10 +71,15 @@ export default function OrderSuccessPage() {
     }
   }, [orderId]);
 
+  let cleanStoreWa = (settings?.whatsappNumber || '').replace(/[^0-9]/g, '');
+  if (cleanStoreWa.startsWith('01')) {
+    cleanStoreWa = '88' + cleanStoreWa;
+  }
+
   const whatsappUrl =
-    settings?.whatsappNumber && order
-      ? `https://wa.me/${settings.whatsappNumber.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
-          `আসসালামু আলাইকুম, আমি অর্ডার করেছি!\nঅর্ডার আইডি: ${order.id}\nপ্যাকেজ: ${order.selectedPackage.banglaName} (${order.quantity}টি)\nমোট মূল্য: ৳${order.total}\nনাম: ${order.customerName}\nফোন: ${order.phone}\nঠিকানা: ${order.address}`
+    cleanStoreWa && order
+      ? `https://wa.me/${cleanStoreWa}?text=${encodeURIComponent(
+          `আসসালামু আলাইকুম, আমি অর্ডার করেছি!\nঅর্ডার আইডি: ${order.id}\nপ্যাকেজ: ${order.selectedPackage?.banglaName || order.selectedPackage?.name} (${order.quantity}টি)\nমোট মূল্য: ৳${order.total}\nনাম: ${order.customerName}\nফোন: ${order.phone}\nঠিকানা: ${order.address}`
         )}`
       : '#';
 

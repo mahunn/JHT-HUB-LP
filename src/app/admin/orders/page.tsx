@@ -24,6 +24,12 @@ import {
 } from 'lucide-react';
 import { Order, OrderStatus } from '@/types/landing';
 
+function formatWaPhone(phone: string): string {
+  let clean = (phone || '').replace(/[^0-9]/g, '');
+  if (clean.startsWith('01')) clean = '88' + clean;
+  return clean;
+}
+
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -42,7 +48,7 @@ export default function AdminOrdersPage() {
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/orders');
+      const res = await fetch('/api/orders', { cache: 'no-store' });
       const data = await res.json();
       if (data.success) {
         setOrders(data.orders);
@@ -310,7 +316,7 @@ export default function AdminOrdersPage() {
               </a>
 
               <a
-                href={`https://wa.me/${order.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
+                href={`https://wa.me/${formatWaPhone(order.phone)}?text=${encodeURIComponent(
                   `আসসালামু আলাইকুম ${order.customerName},\nJHT HUB থেকে আপনার অর্ডারটির (${order.id}) জন্য যোগাযোগ করছি।`
                 )}`}
                 target="_blank"
@@ -454,7 +460,7 @@ export default function AdminOrdersPage() {
 
                       {/* WhatsApp Message */}
                       <a
-                        href={`https://wa.me/${order.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
+                        href={`https://wa.me/${formatWaPhone(order.phone)}?text=${encodeURIComponent(
                           `আসসালামু আলাইকুম ${order.customerName},\nJHT HUB থেকে আপনার আতর কম্বো অর্ডারটির জন্য যোগাযোগ করছি।\nঅর্ডার আইডি: ${order.id}\nপ্যাকেজ: ${order.selectedPackage?.banglaName} (×${order.quantity})\nমোট মূল্য: ৳${order.total}\nঠিকানা: ${order.address}\n\nআপনার অর্ডারটি কি কনফার্ম করব?`
                         )}`}
                         target="_blank"
@@ -635,7 +641,7 @@ export default function AdminOrdersPage() {
               </a>
 
               <a
-                href={`https://wa.me/${selectedOrder.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
+                href={`https://wa.me/${formatWaPhone(selectedOrder.phone)}?text=${encodeURIComponent(
                   `আসসালামু আলাইকুম ${selectedOrder.customerName}, আপনার অর্ডার (${selectedOrder.id}) কনফার্ম করার জন্য যোগাযোগ করছি।`
                 )}`}
                 target="_blank"

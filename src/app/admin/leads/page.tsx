@@ -46,7 +46,7 @@ export default function AdminLeadsPage() {
   const fetchLeads = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/leads');
+      const res = await fetch('/api/leads', { cache: 'no-store' });
       const data = await res.json();
       if (data.success) {
         setLeads(data.leads);

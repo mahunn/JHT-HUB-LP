@@ -16,7 +16,7 @@ export default function CheckoutOrderForm({ product }: CheckoutOrderFormProps) {
   // Sort packages ascending by price for display
   const sortedPackages = [...product.packages].sort((a, b) => a.offerPrice - b.offerPrice);
 
-  const defaultPkg = product.packages.find((p) => p.id === 'combo-10') || product.packages.find((p) => p.isDefault) || product.packages[0] || {
+  const defaultPkg = product.packages.find((p) => p.isDefault) || product.packages.find((p) => p.id === 'combo-10') || product.packages[0] || {
     id: 'combo-10',
     name: '10 Pcs Attar Combo',
     banglaName: '১০ পিস মেগা কম্বো',
@@ -38,12 +38,12 @@ export default function CheckoutOrderForm({ product }: CheckoutOrderFormProps) {
 
   const deliveryCharge =
     cityZone === 'dhaka'
-      ? product.freeDeliveryDhaka
+      ? product.freeDeliveryDhaka || product.deliveryChargeDhaka === 0
         ? 0
-        : product.deliveryChargeDhaka
-      : product.freeDeliveryOutside
+        : (product.deliveryChargeDhaka || 0)
+      : product.freeDeliveryOutside || product.deliveryChargeOutside === 0
       ? 0
-      : product.deliveryChargeOutside;
+      : (product.deliveryChargeOutside || 0);
 
   const subtotal = selectedPkg.offerPrice * quantity;
   const grandTotal = subtotal + deliveryCharge;
@@ -82,7 +82,8 @@ export default function CheckoutOrderForm({ product }: CheckoutOrderFormProps) {
   const handlePackageSelect = (pkg: ComboPackage) => {
     setSelectedPkg(pkg);
     setErrorMessage('');
-    if (phone.replace(/[^0-9]/g, '').length >= 10) {
+    const rawClean = phone.replace(/[^0-9]/g, '');
+    if (rawClean.length >= 10) {
       captureLead(phone, customerName, address, pkg);
     }
   };
@@ -90,7 +91,8 @@ export default function CheckoutOrderForm({ product }: CheckoutOrderFormProps) {
   const updateQuantity = (change: number) => {
     const newQty = Math.max(1, Math.min(20, quantity + change));
     setQuantity(newQty);
-    if (phone.replace(/[^0-9]/g, '').length >= 10) {
+    const rawClean = phone.replace(/[^0-9]/g, '');
+    if (rawClean.length >= 10) {
       captureLead(phone, customerName, address, selectedPkg, newQty);
     }
   };
@@ -103,7 +105,10 @@ export default function CheckoutOrderForm({ product }: CheckoutOrderFormProps) {
     pkgVal?: ComboPackage,
     qtyVal?: number
   ) => {
-    const currentPhone = (phoneVal !== undefined ? phoneVal : phone).replace(/[^0-9]/g, '');
+    let currentPhone = (phoneVal !== undefined ? phoneVal : phone).replace(/[^0-9]/g, '');
+    if (currentPhone.startsWith('8801')) {
+      currentPhone = currentPhone.substring(2);
+    }
     if (!currentPhone || currentPhone.length < 10) return;
 
     try {
@@ -133,7 +138,10 @@ export default function CheckoutOrderForm({ product }: CheckoutOrderFormProps) {
 
   // Debounced auto-capture as user types phone
   useEffect(() => {
-    const clean = phone.replace(/[^0-9]/g, '');
+    let clean = phone.replace(/[^0-9]/g, '');
+    if (clean.startsWith('8801')) {
+      clean = clean.substring(2);
+    }
     if (clean.length >= 11) {
       const timer = setTimeout(() => {
         captureLead(phone, customerName, address);
@@ -151,8 +159,12 @@ export default function CheckoutOrderForm({ product }: CheckoutOrderFormProps) {
       return;
     }
 
-    const cleanPhone = phone.replace(/[^0-9]/g, '');
-    if (!cleanPhone || cleanPhone.length < 11) {
+    let cleanPhone = phone.replace(/[^0-9]/g, '');
+    if (cleanPhone.startsWith('8801')) {
+      cleanPhone = cleanPhone.substring(2);
+    }
+
+    if (!cleanPhone || cleanPhone.length < 11 || !cleanPhone.startsWith('01')) {
       setErrorMessage('অনুগ্রহ করে একটি সঠিক ১১ ডিজিটের মোবাইল নাম্বার দিন (যেমন: 017XXXXXXXX)।');
       return;
     }

@@ -5,7 +5,10 @@ import { ProductData, StoreSettings } from '@/types/landing';
 import AnnouncementBar from '@/components/AnnouncementBar';
 import HeroSection from '@/components/HeroSection';
 import ScentsBreakdown from '@/components/ScentsBreakdown';
+import FeaturesGrid from '@/components/FeaturesGrid';
 import HadithSection from '@/components/HadithSection';
+import CustomerReviews from '@/components/CustomerReviews';
+import FaqSection from '@/components/FaqSection';
 import TrustBadges from '@/components/TrustBadges';
 import CheckoutOrderForm from '@/components/CheckoutOrderForm';
 import FloatingActions from '@/components/FloatingActions';
@@ -20,53 +23,12 @@ export default function LandingPageClient({
   initialProduct,
   initialSettings,
 }: LandingPageClientProps) {
-  const [product, setProduct] = useState<ProductData>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const cached = localStorage.getItem('jht_cached_product');
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (parsed && parsed.mainBannerImage) return parsed;
-        }
-      } catch (e) {}
-    }
-    return initialProduct;
-  });
+  const [product, setProduct] = useState<ProductData>(initialProduct);
+  const [settings, setSettings] = useState<StoreSettings>(initialSettings);
 
-  const [settings, setSettings] = useState<StoreSettings>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const cached = localStorage.getItem('jht_cached_settings');
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (parsed) return parsed;
-        }
-      } catch (e) {}
-    }
-    return initialSettings;
-  });
-
-  // Live client-side hydration to ensure newly uploaded images/prices appear immediately
+  // Live client-side fetch to ensure newly uploaded images/prices appear immediately without reload
   useEffect(() => {
     let isMounted = true;
-
-    // Check localStorage immediately upon client mount
-    try {
-      const cached = localStorage.getItem('jht_cached_product');
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (parsed?.mainBannerImage && isMounted) {
-          setProduct(parsed);
-        }
-      }
-      const cachedSet = localStorage.getItem('jht_cached_settings');
-      if (cachedSet) {
-        const parsedSet = JSON.parse(cachedSet);
-        if (parsedSet && isMounted) {
-          setSettings(parsedSet);
-        }
-      }
-    } catch (e) {}
 
     const fetchLatest = async () => {
       try {
@@ -114,11 +76,26 @@ export default function LandingPageClient({
       {/* Hero & Product */}
       <HeroSection product={product} />
 
+      {/* Features Grid (if present) */}
+      {product.features && product.features.length > 0 && (
+        <FeaturesGrid features={product.features} />
+      )}
+
       {/* Scents Collection */}
       <ScentsBreakdown scents={product.scents} />
 
       {/* Hadith */}
       <HadithSection />
+
+      {/* Customer Reviews (if present) */}
+      {product.reviews && product.reviews.length > 0 && (
+        <CustomerReviews reviews={product.reviews} />
+      )}
+
+      {/* FAQ Section (if present) */}
+      {product.faqList && product.faqList.length > 0 && (
+        <FaqSection faqList={product.faqList} />
+      )}
 
       {/* Trust Badges */}
       <TrustBadges trustBadges={product.trustBadges} />
@@ -134,3 +111,4 @@ export default function LandingPageClient({
     </main>
   );
 }
+
