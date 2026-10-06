@@ -200,7 +200,7 @@ export default function AdminDashboardPage() {
             {abandonedLeads.slice(0, 3).map((lead) => {
               const cleanPhone = lead.phone.replace(/[^0-9]/g, '');
               const whatsappNumber = cleanPhone.startsWith('88') ? cleanPhone : `88${cleanPhone}`;
-              const pkg = lead.selectedPackage?.banglaName || '১০ পিস আতর কম্বো';
+              const pkg = lead.selectedPackage?.banglaName || 'স্পেশাল ৩-ইন-১ আচার কম্বো';
 
               return (
                 <div
@@ -229,7 +229,7 @@ export default function AdminDashboardPage() {
                     </a>
                     <a
                       href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-                        `আসসালামু আলাইকুম ${lead.customerName || ''}, JHT HUB থেকে যোগাযোগ করছি। আপনার আতর কম্বো অর্ডারটি সম্পর্কে জানতে ফোন করা হয়েছিল।`
+                        `আসসালামু আলাইকুম ${lead.customerName || ''}, JHT Food থেকে যোগাযোগ করছি। আপনার আচার কম্বো অর্ডারটি সম্পর্কে জানতে যোগাযোগ করা হয়েছিল।`
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"

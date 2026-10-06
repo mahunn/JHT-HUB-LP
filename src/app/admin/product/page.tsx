@@ -236,10 +236,10 @@ export default function AdminProductPage() {
       id: `pkg-${Date.now()}`,
       name: 'Custom Combo',
       banglaName: 'নতুন কম্বো প্যাকেজ',
-      subtitle: 'বাছাইকৃত প্রিমিয়াম আতর',
-      quantity: 5,
-      regularPrice: 600,
-      offerPrice: 350,
+      subtitle: 'বাছাইকৃত সুস্বাদু আচার ও বালাচাও',
+      quantity: 1,
+      regularPrice: 1450,
+      offerPrice: 799,
       badge: 'অফার 🔥',
       isDefault: false,
     };
@@ -383,7 +383,7 @@ export default function AdminProductPage() {
           { id: 'general', label: 'হেডলাইন ও তথ্য', icon: Sparkles },
           { id: 'images', label: 'ছবি ও গ্যালারি', icon: ImageIcon },
           { id: 'packages', label: 'কম্বো প্যাকেজ সমূহ', icon: Package },
-          { id: 'scents', label: 'আতর ও সুবাসের তালিকা', icon: Droplet },
+          { id: 'scents', label: 'আচারের তালিকা', icon: Package },
           { id: 'reviews', label: 'কাস্টমার রিভিউ', icon: Star },
           { id: 'delivery', label: 'ডেলিভারি চার্জ', icon: Truck },
         ].map((tab) => {
@@ -442,7 +442,7 @@ export default function AdminProductPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">হেডলাইন শুরু (যেমন: মাত্র ৪৯০ টাকায় পাচ্ছেন)</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">হেডলাইন শুরু (যেমন: ২০০ গ্রাম ইলিশের আচার নিলেই)</label>
               <input
                 type="text"
                 value={product.headlinePre}
@@ -455,7 +455,7 @@ export default function AdminProductPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">হেডলাইন হাইলাইট (যেমন: প্রিমিয়াম ১০ পিস আতর)</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">হেডলাইন হাইলাইট (যেমন: গরু ও চিংড়ি বালাচাও সম্পূর্ণ ফ্রি!)</label>
               <input
                 type="text"
                 value={product.headlineHighlight}
@@ -468,7 +468,7 @@ export default function AdminProductPage() {
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-xs font-bold text-slate-700 mb-1">হেডলাইন শেষ (যেমন: ১০টি ভিন্ন ভিন্ন ফ্লেভারের আতর পাচ্ছেন)</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">হেডলাইন শেষ (যেমন: মোট ৩টি স্পেশাল লোভনীয় আইটেম পাচ্ছেন)</label>
               <input
                 type="text"
                 value={product.headlinePost}
@@ -774,7 +774,7 @@ export default function AdminProductPage() {
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">আতর সংখ্যা (পিস)</label>
+                    <label className="block text-[11px] font-bold text-slate-600 mb-1">সেট বা আইটেম সংখ্যা</label>
                     <input
                       type="number"
                       value={pkg.quantity}
@@ -842,17 +842,17 @@ export default function AdminProductPage() {
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
           <div className="flex items-center justify-between pb-2 border-b border-slate-200">
             <div>
-              <h2 className="text-lg font-bold text-slate-900">আতর ও সুবাসের তালিকা</h2>
-              <p className="text-xs text-slate-500">ল্যান্ডিং পেইজে প্রদর্শিত আতরগুলোর নাম ও নোট পরিবর্তন করুন</p>
+              <h2 className="text-lg font-bold text-slate-900">কম্বোর আচারের তালিকা</h2>
+              <p className="text-xs text-slate-500">প্যাকেজে অন্তর্ভুক্ত আচার ও খাবারের বিবরণ পরিবর্তন করুন</p>
             </div>
           </div>
 
-          {/* Arabian Scents */}
+          {/* Arabian Scents / Special Achars */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-amber-900 text-sm flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                এরাবিয়ান টাইপ আতর
+                মূল ও স্পেশাল আচার সমূহ
               </h3>
               <button
                 type="button"
@@ -860,7 +860,7 @@ export default function AdminProductPage() {
                 className="text-xs font-bold text-amber-700 bg-amber-100 hover:bg-amber-200 px-3 py-1 rounded-lg transition-colors flex items-center gap-1"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>আতর যোগ করুন</span>
+                <span>আইটেম যোগ করুন</span>
               </button>
             </div>
 
@@ -902,20 +902,20 @@ export default function AdminProductPage() {
             </div>
           </div>
 
-          {/* Perfume Scents */}
+          {/* Perfume Scents / Free Gifts */}
           <div className="space-y-3 pt-4 border-t border-slate-200">
             <div className="flex items-center justify-between">
-              <h3 className="font-bold text-blue-900 text-sm flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-                পারফিউম টাইপ আতর
+              <h3 className="font-bold text-emerald-900 text-sm flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                ফ্রি গিফট ও বালাচাও আইটেম
               </h3>
               <button
                 type="button"
                 onClick={() => addScent('perfume')}
-                className="text-xs font-bold text-blue-700 bg-blue-100 hover:bg-blue-200 px-3 py-1 rounded-lg transition-colors flex items-center gap-1"
+                className="text-xs font-bold text-emerald-700 bg-emerald-100 hover:bg-emerald-200 px-3 py-1 rounded-lg transition-colors flex items-center gap-1"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>আতর যোগ করুন</span>
+                <span>আইটেম যোগ করুন</span>
               </button>
             </div>
 

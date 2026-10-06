@@ -461,7 +461,7 @@ export default function AdminOrdersPage() {
                       {/* WhatsApp Message */}
                       <a
                         href={`https://wa.me/${formatWaPhone(order.phone)}?text=${encodeURIComponent(
-                          `আসসালামু আলাইকুম ${order.customerName},\nJHT HUB থেকে আপনার আতর কম্বো অর্ডারটির জন্য যোগাযোগ করছি।\nঅর্ডার আইডি: ${order.id}\nপ্যাকেজ: ${order.selectedPackage?.banglaName} (×${order.quantity})\nমোট মূল্য: ৳${order.total}\nঠিকানা: ${order.address}\n\nআপনার অর্ডারটি কি কনফার্ম করব?`
+                          `আসসালামু আলাইকুম ${order.customerName},\nJHT Food থেকে আপনার আচার কম্বো অর্ডারটির জন্য যোগাযোগ করছি।\nঅর্ডার আইডি: ${order.id}\nপ্যাকেজ: ${order.selectedPackage?.banglaName} (×${order.quantity})\nমোট মূল্য: ৳${order.total}\nঠিকানা: ${order.address}\n\nআপনার অর্ডারটি কি কনফার্ম করব?`
                         )}`}
                         target="_blank"
                         rel="noopener noreferrer"

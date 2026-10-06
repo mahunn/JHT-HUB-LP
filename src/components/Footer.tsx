@@ -27,8 +27,8 @@ export default function Footer({ settings, product }: FooterProps) {
           </div>
         </div>
 
-        <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
-          হালাল ও খাঁটি সুবাসের বিশ্বস্ত ঠিকানা। সারা বাংলাদেশে ক্যাশ অন ডেলিভারিতে হোম ডেলিভারি সেবা।
+        <p className="text-xs text-slate-400 max-w-sm mx-auto leading-relaxed">
+          খাঁটি ঘরোয়া স্বাদের সুস্বাদু আচারের বিশ্বস্ত ঠিকানা। সারা বাংলাদেশে ক্যাশ অন ডেলিভারিতে ফ্রি হোম ডেলিভারি সেবা।
         </p>
 
         {/* Contact */}

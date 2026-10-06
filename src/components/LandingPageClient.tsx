@@ -4,9 +4,8 @@ import { useState, useEffect } from 'react';
 import { ProductData, StoreSettings } from '@/types/landing';
 import AnnouncementBar from '@/components/AnnouncementBar';
 import HeroSection from '@/components/HeroSection';
-import ScentsBreakdown from '@/components/ScentsBreakdown';
+import ComboItemsBreakdown from '@/components/ComboItemsBreakdown';
 import FeaturesGrid from '@/components/FeaturesGrid';
-import HadithSection from '@/components/HadithSection';
 import CustomerReviews from '@/components/CustomerReviews';
 import FaqSection from '@/components/FaqSection';
 import TrustBadges from '@/components/TrustBadges';
@@ -26,7 +25,7 @@ export default function LandingPageClient({
   const [product, setProduct] = useState<ProductData>(initialProduct);
   const [settings, setSettings] = useState<StoreSettings>(initialSettings);
 
-  // Live client-side fetch to ensure newly uploaded images/prices appear immediately without reload
+  // Live client-side fetch to ensure newly updated data appears immediately
   useEffect(() => {
     let isMounted = true;
 
@@ -73,26 +72,21 @@ export default function LandingPageClient({
         countdownHours={product.countdownHours}
       />
 
-      {/* Hero & Product */}
+      {/* Hero Section */}
       <HeroSection product={product} />
 
-      {/* Features Grid (if present) */}
-      {product.features && product.features.length > 0 && (
-        <FeaturesGrid features={product.features} />
-      )}
+      {/* Combo Breakdown (The 3 Items: Ilish Achar, Gorur Achar, Chingri Balachao) */}
+      <ComboItemsBreakdown />
 
-      {/* Scents Collection */}
-      <ScentsBreakdown scents={product.scents} />
+      {/* Features Grid (Why JHT Food is best) */}
+      <FeaturesGrid features={product.features} />
 
-      {/* Hadith */}
-      <HadithSection />
-
-      {/* Customer Reviews (if present) */}
+      {/* Customer Reviews */}
       {product.reviews && product.reviews.length > 0 && (
         <CustomerReviews reviews={product.reviews} />
       )}
 
-      {/* FAQ Section (if present) */}
+      {/* FAQ Section */}
       {product.faqList && product.faqList.length > 0 && (
         <FaqSection faqList={product.faqList} />
       )}
@@ -103,7 +97,7 @@ export default function LandingPageClient({
       {/* Checkout Form */}
       <CheckoutOrderForm product={product} />
 
-      {/* Floating Actions */}
+      {/* Floating Actions (WhatsApp at bottom right & quick call) */}
       <FloatingActions settings={settings} />
 
       {/* Footer */}
@@ -111,4 +105,3 @@ export default function LandingPageClient({
     </main>
   );
 }
-

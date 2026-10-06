@@ -69,9 +69,9 @@ export default function TrustBadges({ trustBadges }: TrustBadgesProps) {
         </div>
 
         {/* Free delivery banner */}
-        <div className="mt-6 p-4 rounded-2xl bg-gradient-to-r from-emerald-700 to-emerald-600 text-white text-center font-bold text-sm flex items-center justify-center gap-2.5 shadow-lg shadow-emerald-700/20">
+        <div className="mt-6 p-4 rounded-2xl bg-gradient-to-r from-emerald-700 to-emerald-600 text-white text-center font-bold text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-lg shadow-emerald-700/20">
           <Truck className="w-5 h-5 flex-shrink-0" />
-          <span>১০পিছ আতর কম্বো — সারা বাংলাদেশ ডেলিভারি চার্জ ফ্রি!</span>
+          <span>স্পেশাল ৩-ইন-১ আচার কম্বো — সারা বাংলাদেশে ডেলিভারি চার্জ সম্পূর্ণ ফ্রি!</span>
         </div>
       </div>
     </section>

@@ -13,9 +13,19 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: `${product.productName} - ${settings.storeName}`,
     description: `${product.headlinePre} ${product.headlineHighlight}! ${product.headlinePost}`,
-    keywords: ['আতর কম্বো', 'JHT HUB', 'Attar Combo', 'Perfume Combo', 'Islamic Perfume Bangladesh', 'হালাল পারফিউম'],
+    keywords: [
+      'ইলিশের আচার',
+      'গরুর মাংসের আচার',
+      'চিংড়ি বালাচাও',
+      'JHT Food',
+      'Ilish Achar',
+      'Gorur Achar',
+      'Chingri Balachao',
+      'স্পেশাল আচার কম্বো',
+      'হোমমেড আচার বাংলাদেশ'
+    ],
     openGraph: {
-      title: product.productName,
+      title: `${product.productName} - ${settings.storeName}`,
       description: `${product.headlinePre} ${product.headlineHighlight}! ${product.freeDeliveryHeadline}`,
       images: [
         {

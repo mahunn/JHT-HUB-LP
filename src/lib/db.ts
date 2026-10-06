@@ -46,20 +46,21 @@ function getKvConfig() {
 
 const DEFAULT_DB: DatabaseSchema = {
   product: {
-    brandName: 'JHT HUB',
-    productName: 'প্রিমিয়াম ১০ পিস আতর কম্বো',
-    headlinePre: 'মাত্র ৪৯০ টাকায় পাচ্ছেন',
-    headlineHighlight: 'প্রিমিয়াম ১০ পিস আতর',
-    headlinePost: '১০টি ভিন্ন ভিন্ন ফ্লেভারের আতর পাচ্ছেন',
-    headlineSub: '১০০% অ্যালকোহল মুক্ত • লং লাস্টিং ১২+ ঘণ্টা • প্রিমিয়াম সুবাস',
-    freeDeliveryHeadline: 'সাথে সারা বাংলাদেশ ডেলিভারি চার্জ ফ্রি',
-    stockCount: 23,
-    countdownHours: 12,
-    mainBannerImage: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?w=1000&q=80',
+    brandName: 'JHT Food',
+    productName: 'স্পেশাল ইলিশের আচার কম্বো ধামাকা অফার',
+    headlinePre: '২০০ গ্রাম ইলিশের আচার অর্ডার করলেই',
+    headlineHighlight: 'গরুর আচার ও চিংড়ি বালাচাও সম্পূর্ণ ফ্রি!',
+    headlinePost: '১০০ গ্রাম গরুর মাংসের আচার + ১০০ গ্রাম চিংড়ি বালাচাও একদম ফ্রি 🎁',
+    headlineSub: '১০০% খাঁটি সরিষার তেল • ঘরোয়া রেসিপি • কোনো কৃত্রিম কেমিক্যাল বা প্রিজারভেটিভ নেই',
+    freeDeliveryHeadline: 'সারা বাংলাদেশে ডেলিভারি চার্জ সম্পূর্ণ ফ্রি!',
+    stockCount: 18,
+    countdownHours: 10,
+    mainBannerImage: '/images/combo_banner.jpg',
     galleryImages: [
-      'https://images.unsplash.com/photo-1594035910387-fea47794261f?w=1000&q=80',
-      'https://images.unsplash.com/photo-1547887537-6158d64c35b3?w=1000&q=80',
-      'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=1000&q=80'
+      '/images/combo_banner.jpg',
+      '/images/ilish_achar.jpg',
+      '/images/gorur_achar.jpg',
+      '/images/chingri_balachao.jpg'
     ],
     deliveryChargeDhaka: 0,
     deliveryChargeOutside: 0,
@@ -67,78 +68,92 @@ const DEFAULT_DB: DatabaseSchema = {
     freeDeliveryOutside: true,
     packages: [
       {
-        id: 'combo-10',
-        name: '10 Pcs Attar Combo',
-        banglaName: 'আতর কম্বো (১০ পিস)',
-        subtitle: 'প্রিমিয়াম ১০ পিস আতর পাচ্ছেন',
+        id: 'combo-special',
+        name: 'Ilish Achar Combo Pack (3 Items)',
+        banglaName: 'স্পেশাল ৩-ইন-১ আচার কম্বো (মোট ৪০০ গ্রাম)',
+        subtitle: 'ইলিশ আচার (২০০ গ্রাম) + গরুর আচার (১০০ গ্রাম ফ্রি) + চিংড়ি বালাচাও (১০০ গ্রাম ফ্রি)',
         quantity: 1,
-        regularPrice: 990,
-        offerPrice: 490,
-        badge: 'Best Deal 🔥',
+        regularPrice: 1450,
+        offerPrice: 799,
+        badge: 'ধামাকা অফার 🔥',
         isDefault: true,
-        image: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?w=400&q=80'
-      },
-      {
-        id: 'combo-5',
-        name: '5 Pcs Trial Pack',
-        banglaName: '৫ পিস ট্রায়াল প্যাক',
-        subtitle: '৫টি সেরা ভিন্ন ফ্লেভারের আতর',
-        quantity: 1,
-        regularPrice: 550,
-        offerPrice: 290,
-        badge: 'জনপ্রিয়',
-        isDefault: false,
-        image: 'https://images.unsplash.com/photo-1547887537-6158d64c35b3?w=400&q=80'
-      },
-      {
-        id: 'combo-20',
-        name: '20 Pcs Mega Box',
-        banglaName: '২০ পিস স্পেশাল কম্বো',
-        subtitle: 'সবগুলো ফ্লেভার ডাবল সেট + ফ্রি ডেলিভারি',
-        quantity: 1,
-        regularPrice: 1890,
-        offerPrice: 890,
-        badge: 'মেগা অফার 🎁',
-        isDefault: false,
-        image: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=400&q=80'
+        image: '/images/combo_banner.jpg'
       }
     ],
     scents: [
-      { id: 'sc-1', name: 'ইরানি বাখুর', category: 'arabian', notes: 'ঐতিহ্যবাহী মিষ্টি ও মোহনীয় বাখুর নোট' },
-      { id: 'sc-2', name: 'সুলতান', category: 'arabian', notes: 'রাজকীয় স্পাইসি ও উডি সুবাস' },
-      { id: 'sc-3', name: 'এহেসাস আল আরাবিয়া', category: 'arabian', notes: 'মন জুড়ানো মিষ্টি এরাবিয়ান ব্লেন্ড' },
-      { id: 'sc-4', name: 'জান্নাতুল ফেরদৌস', category: 'arabian', notes: 'চিরচেনা ক্লাসিক জান্নাতুল ফেরদাউসের সুবাস' },
-      { id: 'sc-5', name: 'আমির আল উদ', category: 'arabian', notes: 'গাঢ় ও দীর্ঘস্থায়ী প্রিমিয়াম উদ নোট' },
-      { id: 'sc-6', name: 'সিলভার ড্রপ', category: 'perfume', notes: 'সতেজ ও ফ্রেশ অ্যাকোয়াটিক পারফিউম ফিল' },
-      { id: 'sc-7', name: 'কুল ওয়াটার', category: 'perfume', notes: 'ঠাণ্ডা রিফ্রেশিং সামার স্পেশাল নোট' },
-      { id: 'sc-8', name: 'হোয়াইট কস্তুরী', category: 'perfume', notes: 'নরম, মোলায়েম ও দীর্ঘস্থায়ী হোয়াইট মাস্ক' },
-      { id: 'sc-9', name: 'চকলেট মাস্ক', category: 'perfume', notes: 'চকলেট ও ভ্যানিলার মিষ্টি মেলবন্ধন' },
-      { id: 'sc-10', name: 'ডানহিল ডিজায়ার', category: 'perfume', notes: 'আধুনিক লাক্সারি সিগনেচার সুবাস' }
+      { id: 'item-1', name: 'ইলিশ মাছের স্পেশাল আচার (২০০ গ্রাম)', category: 'arabian', notes: 'তাজা পদ্মার ইলিশ, খাঁটি ঘানিভাঙা সরিষার তেল ও স্পেশাল মশলা' },
+      { id: 'item-2', name: 'গরুর মাংসের চুক্কা আচার (১০০ গ্রাম ফ্রি)', category: 'arabian', notes: 'হাড় ছাড়া ফ্রেশ গরুর মাংস, তুলতুলে নরম ও মশলাদার চুক্কা স্বাদ' },
+      { id: 'item-3', name: 'মচমচে চিংড়ি শুঁটকি বালাচাও (১০০ গ্রাম ফ্রি)', category: 'perfume', notes: 'ক্রিস্পি ভাজা পেঁয়াজ-রসুন ও খাঁটি মশলার মুখরোচক বালাচাও' }
     ],
     features: [
-      { id: 'ft-1', title: '১০০% অ্যালকোহল ও কেমিক্যাল মুক্ত', description: 'সম্পূর্ণ হালাল উপায়ে প্রাকৃতিক এসেন্স দিয়ে প্রস্তুতকৃত।' },
-      { id: 'ft-2', title: '১২+ ঘণ্টা লং লাস্টিং সুবাস', description: 'কাপড়ে ব্যবহারে সারা দিনব্যাপী থাকবে চমৎকার সুবাস।' },
-      { id: 'ft-3', title: '১০টি আকর্ষণীয় ফ্লেভার', description: 'এরাবিয়ান এবং আধুনিক পারফিউম টোনের সেরা কালেকশন।' },
-      { id: 'ft-4', title: 'পকেট সাইজ ও সহজে বহনযোগ্য', description: '৩ মিলি রোলাক কাঁচের বোতল, পকেটে নিয়ে ঘুরতে সুবিধা।' }
+      { id: 'ft-1', title: '১০০% খাঁটি সরিষার তেলে জারণকৃত', description: 'কাঠের ঘানিভাঙা খাঁটি সরিষার তেল ও মশলা দিয়ে তৈরি, কোনো কেমিক্যাল নেই।', iconName: 'ShieldCheck' },
+      { id: 'ft-2', title: 'ঘরোয়া ও স্বাস্থ্যসম্মত পরিবেশে প্রস্তুত', description: 'সম্পূর্ণ মায়ের হাতের ঘরোয়া স্বাদে পরম যত্নে ও হাইজিন মেইনটেইন করে তৈরি।', iconName: 'Heart' },
+      { id: 'ft-3', title: 'গরম ভাত ও খিচুড়ির সাথে অতুলনীয়', description: 'গরম ধোঁয়া ওঠা ভাত, খিচুড়ি, পোলাও বা পরোটার সাথে অমৃত স্বাদ।', iconName: 'Sparkles' },
+      { id: 'ft-4', title: '১০০ গ্রাম গরুর আচার + ১০০ গ্রাম বালাচাও ফ্রি', description: '২০০ গ্রাম ইলিশের আচার নিলেই পাচ্ছেন আরও ২টি সেরা আইটেম একদম ফ্রি।', iconName: 'Gift' }
     ],
     trustBadges: [
-      { id: 'tb-1', title: 'অগ্রিম কোনো টাকা লাগছে না', description: 'ফুল ক্যাশ অন ডেলিভারিতে নিতে পারবেন। পণ্য পেয়ে মূল্য দিন।', iconName: 'Banknote' },
-      { id: 'tb-2', title: 'চেক করে নেওয়ার শতভাগ সুবিধা', description: 'ডেলিভারি ম্যানের সামনে চেক করে দেখুন। পছন্দ না হলে রিটার্ন করে দিন।', iconName: 'CheckCircle2' },
-      { id: 'tb-3', title: '৭ দিনের সহজ রিটার্ন পলিসি', description: 'প্রোডাক্ট রিসিভ করার ৭ দিন পরও রিটার্ন করতে পারবেন।', iconName: 'RotateCcw' },
-      { id: 'tb-4', title: 'ফ্রি হোম ডেলিভারি', description: '১০ পিছ আতর কম্বোর সাথে সারা বাংলাদেশ ডেলিভারি চার্জ সম্পূর্ণ ফ্রি।', iconName: 'Truck' }
+      { id: 'tb-1', title: 'ডেলিভারি চার্জ সম্পূর্ণ ফ্রি', description: 'সারা বাংলাদেশে ডেলিভারি চার্জ একদম ফ্রি (০ টাকা)।', iconName: 'Truck' },
+      { id: 'tb-2', title: 'অগ্রিম ১ টাকাও দিতে হবে না', description: 'ফুল ক্যাশ অন ডেলিভারি। পণ্য হাতে বুঝে নিয়ে টাকা দিবেন।', iconName: 'Banknote' },
+      { id: 'tb-3', title: 'খুলে দেখে নেওয়ার শতভাগ সুযোগ', description: 'ডেলিভারি ম্যানের সামনে পার্সেল খুলে দেখে চেক করে নেওয়ার সুযোগ।', iconName: 'CheckCircle2' },
+      { id: 'tb-4', title: '১০০% খাঁটি ও সন্তুষ্টির গ্যারান্টি', description: 'স্বাদ ও মানে ১০০% তৃপ্তির গ্যারান্টি।', iconName: 'RotateCcw' }
     ],
-    reviews: [],
-    faqList: []
+    reviews: [
+      {
+        id: 'rev-1',
+        customerName: 'মোহাম্মদ রাশেদুল ইসলাম',
+        location: 'ধানমন্ডি, ঢাকা',
+        rating: 5,
+        comment: 'ইলিশ মাছের আচারটা অসম্ভব মজার ছিল! সরিষার তেলের নিখাদ ঝাঁঝ আর ইলিশের পারফেক্ট স্বাদ। সাথে গরুর আচার আর চিংড়ি বালাচাও ফ্রিতে পেয়ে পরিবারের সবাই খুশি। ধন্যবাদ JHT Food!',
+        date: '২ দিন আগে',
+        verified: true
+      },
+      {
+        id: 'rev-2',
+        customerName: 'তানিয়া সুলতানা',
+        location: 'চট্টগ্রাম',
+        rating: 5,
+        comment: '৭৯৯ টাকায় এত চমৎকার ৩টা আইটেম সাথে ফ্রি ডেলিভারি সত্যি অবিশ্বাস্য! চিংড়ি বালাচাওটা এতটাই ক্রিস্পি যে গরম ভাতের সাথে অমৃত লাগে। আবার অর্ডার করব ইনশাআল্লাহ।',
+        date: '৪ দিন আগে',
+        verified: true
+      },
+      {
+        id: 'rev-3',
+        customerName: 'কবির হোসাইন',
+        location: 'সিলেট সদর',
+        rating: 5,
+        comment: 'ডেলিভারি ম্যানের সামনে খুলে দেখে নিয়েছি। প্যাকেজিং দারুণ ছিল, একদম তেল চুইয়ে পড়েনি। গরুর মাংসের চুক্কা আচারটা খুবই নরম ও সুস্বাদু।',
+        date: '১ সপ্তাহ আগে',
+        verified: true
+      }
+    ],
+    faqList: [
+      {
+        question: 'কম্বো অফারে মোট কী কী আইটেম থাকবে এবং পরিমাণ কত?',
+        answer: 'এই কম্বোতে আপনি মোট ৩টি দারুণ আইটেম পাচ্ছেন: ১. ইলিশ মাছের আচার (২০০ গ্রাম), ২. গরুর মাংসের আচার (১০০ গ্রাম - সম্পূর্ণ ফ্রি), ৩. চিংড়ি শুঁটকি বালাচাও (১০০ গ্রাম - সম্পূর্ণ ফ্রি)। মোট ৪০০ গ্রাম খাবার।'
+      },
+      {
+        question: 'ডেলিভারি চার্জ কি সত্যিই ফ্রি?',
+        answer: 'হ্যাঁ! ঢাকা শহর কিংবা ঢাকার বাইরে বাংলাদেশের যেকোনো জেলায় ডেলিভারি চার্জ সম্পূর্ণ ফ্রি (০ টাকা)। আপনাকে কোনো ডেলিভারি চার্জ দিতে হবে না।'
+      },
+      {
+        question: 'আমাকে কি কোনো টাকা অগ্রিম দিতে হবে?',
+        answer: 'না, একদমই না! অগ্রিম এক টাকাও দিতে হবে না। ডেলিভারি ম্যান যখন খাবার আপনার ঠিকানায় নিয়ে আসবে, আপনি খাবার হাতে পেয়ে চেক করে সম্পূর্ণ মূল্য ক্যাশ অন ডেলিভারিতে পরিশোধ করবেন।'
+      },
+      {
+        question: 'আচার কতদিন ভালো থাকবে?',
+        answer: 'আমাদের প্রতিটি আচার খাঁটি ঘানিভাঙা সরিষার তেলে ডুবিয়ে প্রস্তুত করা হয়। স্বাভাবিক তাপমাত্রায় শুকনো চামচ ব্যবহার করলে ৬ মাস পর্যন্ত একদম টাটকা ও ভালো থাকবে।'
+      }
+    ]
   },
   settings: {
-    storeName: 'JHT HUB',
+    storeName: 'JHT Food',
     hotlinePhone: '01522-133748',
     whatsappNumber: '8801522133748',
     messengerUrl: '',
     facebookPageUrl: '',
     metaPixelId: '',
     tiktokPixelId: '',
-    announcementText: '🎉 ধামাকা অফার: আজই অর্ডার করলে সারা বাংলাদেশে ক্যাশ অন ডেলিভারি সম্পূর্ণ ফ্রি!',
+    announcementText: '🎉 ধামাকা অফার: ২০০ গ্রাম ইলিশের আচার অর্ডার করলেই ১০০ গ্রাম গরুর আচার ও ১০০ গ্রাম চিংড়ি বালাচাও সম্পূর্ণ ফ্রি! সারা দেশে ডেলিভারি চার্জ ফ্রি!',
     announcementActive: true
   },
   orders: [],

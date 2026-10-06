@@ -162,13 +162,13 @@ export default function AdminLeadsPage() {
         address: lead.address || 'ঠিকানা পরে যুক্ত করা হবে',
         cityZone: lead.cityZone || 'dhaka',
         selectedPackage: lead.selectedPackage || {
-          id: 'combo-10',
-          name: '10 Pcs Attar Combo',
-          banglaName: 'আতর কম্বো (১০ পিস)',
-          price: 490,
+          id: 'combo-special',
+          name: 'Ilish Achar Combo Pack (3 Items)',
+          banglaName: 'স্পেশাল ৩-ইন-১ আচার কম্বো',
+          price: 799,
         },
         quantity: lead.quantity || 1,
-        subtotal: (lead.selectedPackage?.price || 490) * (lead.quantity || 1),
+        subtotal: (lead.selectedPackage?.price || 799) * (lead.quantity || 1),
         deliveryCharge: 0,
         total: (lead.selectedPackage?.price || 490) * (lead.quantity || 1),
         notes: `লিড #${lead.id} থেকে কনভার্ট করা অর্ডার। ${lead.notes || ''}`.trim(),
@@ -421,12 +421,12 @@ export default function AdminLeadsPage() {
           {filteredLeads.map((lead) => {
             const cleanPhone = lead.phone.replace(/[^0-9]/g, '');
             const whatsappNumber = cleanPhone.startsWith('88') ? cleanPhone : `88${cleanPhone}`;
-            const pkgName = lead.selectedPackage?.banglaName || lead.selectedPackage?.name || 'আতর কম্বো';
-            const price = lead.selectedPackage?.price || 490;
+            const pkgName = lead.selectedPackage?.banglaName || lead.selectedPackage?.name || 'স্পেশাল ৩-ইন-১ আচার কম্বো';
+            const price = lead.selectedPackage?.price || 799;
             const isEditingNote = editingNoteId === lead.id;
 
             const whatsappMessage = encodeURIComponent(
-              `আসসালামু আলাইকুম ${lead.customerName || 'সম্মানিত গ্রাহক'}, আপনি JHT HUB থেকে "${pkgName}" অর্ডার করতে ফর্ম পূরণ শুরু করেছিলেন। আপনার অর্ডারটি কনফার্ম করতে কোনো তথ্যের প্রয়োজন হলে জানাতে পারেন। ডেলিভারি চার্জ সম্পূর্ণ ফ্রি!`
+              `আসসালামু আলাইকুম ${lead.customerName || 'সম্মানিত গ্রাহক'}, আপনি JHT Food থেকে "${pkgName}" অর্ডার করতে ফর্ম পূরণ শুরু করেছিলেন। আপনার অর্ডারটি কনফার্ম করতে কোনো তথ্যের প্রয়োজন হলে জানাতে পারেন। ডেলিভারি চার্জ সম্পূর্ণ ফ্রি!`
             );
 
             return (
