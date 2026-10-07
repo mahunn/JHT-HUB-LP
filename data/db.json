@@ -9,12 +9,12 @@
     "freeDeliveryHeadline": "সারা বাংলাদেশে ডেলিভারি চার্জ সম্পূর্ণ ফ্রি!",
     "stockCount": 18,
     "countdownHours": 10,
-    "mainBannerImage": "/images/combo_banner.jpg",
+    "mainBannerImage": "/images/combo_showcase_3items.jpg",
     "galleryImages": [
-      "/images/combo_banner.jpg",
-      "/images/ilish_achar.jpg",
-      "/images/gorur_achar.jpg",
-      "/images/chingri_balachao.jpg"
+      "/images/combo_showcase_3items.jpg",
+      "/images/ilish_achar_real.jpg",
+      "/images/gorur_achar_real.jpg",
+      "/images/chingri_balachao_real.jpg"
     ],
     "deliveryChargeDhaka": 0,
     "deliveryChargeOutside": 0,
@@ -31,7 +31,7 @@
         "offerPrice": 799,
         "badge": "ধামাকা অফার 🔥",
         "isDefault": true,
-        "image": "/images/combo_banner.jpg"
+        "image": "/images/combo_showcase_3items.jpg"
       }
     ],
     "scents": [
@@ -162,7 +162,7 @@
     "facebookPageUrl": "",
     "metaPixelId": "",
     "tiktokPixelId": "",
-    "announcementText": "🎉 ধামাকা অফার: ২০০ গ্রাম ইলিশের আচার অর্ডার করলেই ১০০ গ্রাম গরুর আচার ও ১০০ গ্রাম চিংড়ি বালাচাও সম্পূর্ণ ফ্রি! সারা বাংলাদেশে ডেলিভারি চার্জ ফ্রি!",
+    "announcementText": "🎉 ইলিশের আচারে গরু ও বালাচাও ফ্রি!",
     "announcementActive": true
   },
   "orders": [],

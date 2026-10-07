@@ -210,3 +210,16 @@ select:focus {
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
+
+@keyframes orderShine {
+  0% {
+    left: -100%;
+  }
+  45% {
+    left: 130%;
+  }
+  100% {
+    left: 130%;
+  }
+}
+

@@ -1,189 +1,193 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
-import { Gift, Sparkles, Check, ShoppingBag, Flame } from 'lucide-react';
 
-interface ComboItem {
+interface OfferItem {
   id: string;
   name: string;
   weight: string;
-  isFree?: boolean;
-  image: string;
+  badge: string;
+  badgeType: 'main' | 'free';
   tag: string;
+  tagType: 'main' | 'free';
   description: string;
-  features: string[];
+  image: string;
+  alt: string;
 }
 
-const comboItems: ComboItem[] = [
+const items: OfferItem[] = [
   {
     id: 'ilish',
-    name: 'ইলিশ মাছের স্পেশাল আচার',
+    name: 'ইলিশের আচার',
     weight: '২০০ গ্রাম',
-    isFree: false,
-    image: '/images/ilish_achar.jpg',
-    tag: 'মূল আকর্ষণ 🐟',
-    description: 'তাজা নদীর রূপালী ইলিশের খাঁটি টুকরো, কাঠের ঘানিভাঙা খাঁটি সরিষার তেল, আস্ত শুকনা মরিচ ও ঐতিহ্যবাহী স্পেশাল মশলায় জারণকৃত।',
-    features: [
-      'পদ্মা-মেঘনার তাজা ইলিশ মাছের বড় টুকরো',
-      'ঘানিভাঙা খাঁটি সরিষার তেলের ঝাঁঝালো স্বাদ',
-      'কোনো কেমিক্যাল বা কৃত্রিম রঙ নেই',
-      'গরম ধোঁয়া ওঠা ভাতের সাথে অমৃত স্বাদ'
-    ]
+    badge: '২০০ গ্রাম',
+    badgeType: 'main',
+    tag: 'মূল পণ্য',
+    tagType: 'main',
+    description: 'ঘরোয়া স্বাদের খাঁটি ইলিশের আচার',
+    image: '/images/ilish_achar_real.jpg',
+    alt: 'ইলিশের আচার ২০০ গ্রাম',
   },
   {
     id: 'gorur',
-    name: 'গরুর মাংসের চুক্কা আচার',
-    weight: '১০০ গ্রাম',
-    isFree: true,
-    image: '/images/gorur_achar.jpg',
-    tag: 'সম্পূর্ণ ফ্রি উপহার 🎁',
-    description: 'হাড় ছাড়া সলিড ফ্রেশ গরুর মাংসের আঁশে আঁশে সুস্বাদু আচারি মশলা। মাংসের টুকরোগুলো অত্যন্ত নরম ও তুলতুলে, চুক্কা স্বাদে ভরপুর।',
-    features: [
-      '১০০% হাড় ছাড়া সলিড গরুর মাংস',
-      'মাংসের আঁশে আঁশে মশলার পারফেক্ট স্বাদ',
-      'মুখে দিলেই গলে যাওয়ার মতো তুলতুলে নরম',
-      'খিচুড়ি, পোলাও কিংবা রুটি-পরোটার সাথে দুর্দান্ত'
-    ]
+    name: 'গরুর মাংসের আচার',
+    weight: 'ফ্রি ১০০ গ্রাম',
+    badge: 'ফ্রি',
+    badgeType: 'free',
+    tag: 'উপহার',
+    tagType: 'free',
+    description: 'তুলতুলে নরম গরুর চুক্কা মাংসের আচার',
+    image: '/images/gorur_achar_real.jpg',
+    alt: 'গরুর মাংসের আচার ১০০ গ্রাম',
   },
   {
     id: 'chingri',
-    name: 'মচমচে চিংড়ি শুঁটকি বালাচাও',
-    weight: '১০০ গ্রাম',
-    isFree: true,
-    image: '/images/chingri_balachao.jpg',
-    tag: 'সম্পূর্ণ ফ্রি উপহার 🎁',
-    description: 'কক্সবাজারের খাঁটি ছোট চিংড়ি শুঁটকি, মুচমুচে ভাজা পেঁয়াজ বেরেস্তা, রসুন কুচি ও স্পেশাল শুকনা মরিচ ফ্লেক্স দিয়ে তৈরি ঐতিহ্যবাহী বালাচাও।',
-    features: [
-      'কক্সবাজারের প্রিমিয়াম ছোট চিংড়ি শুঁটকি',
-      'একদম মচমচে ক্রাঞ্চি ও লোভনীয় টেস্ট',
-      'এক চামচ গরম ভাতে নিলেই মন জুড়িয়ে যাবে',
-      'দীর্ঘদিন এয়ারটাইট জারে মুচমুচে থাকে'
-    ]
-  }
+    name: 'চিংড়ি বালাচাও',
+    weight: 'ফ্রি ১০০ গ্রাম',
+    badge: 'ফ্রি',
+    badgeType: 'free',
+    tag: 'উপহার',
+    tagType: 'free',
+    description: 'মুচমুচে ফ্রেশ স্বাদের চিংড়ি বালাচাও',
+    image: '/images/chingri_balachao_real.jpg',
+    alt: 'চিংড়ি বালাচাও ১০০ গ্রাম',
+  },
 ];
 
 export default function ComboItemsBreakdown() {
-  const scrollToOrder = () => {
-    const el = document.getElementById('ordernowyet');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
+  const [activeLightboxImg, setActiveLightboxImg] = useState<{ src: string; alt: string } | null>(null);
+
+  const openLightbox = (src: string, alt: string) => {
+    setActiveLightboxImg({ src, alt });
+    if (typeof document !== 'undefined') {
+      document.body.style.overflow = 'hidden';
+    }
+  };
+
+  const closeLightbox = () => {
+    setActiveLightboxImg(null);
+    if (typeof document !== 'undefined') {
+      document.body.style.overflow = '';
     }
   };
 
   return (
-    <section className="py-12 px-3 sm:px-4 bg-gradient-to-b from-white via-amber-50/30 to-white">
-      <div className="max-w-4xl mx-auto">
-        {/* Section Header */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-1.5 px-4 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs sm:text-sm font-extrabold mb-3">
-            <Sparkles className="w-4 h-4 text-emerald-600" />
-            <span>স্পেশাল ৩-ইন-১ কম্বো অফার</span>
-          </div>
+    <section className="w-full max-w-5xl mx-auto py-10 sm:py-14 px-3 sm:px-4 box-border font-['Anek_Bangla','Hind_Siliguri',sans-serif] text-[#14532d]">
+      {/* Header */}
+      <div className="text-center mb-7 sm:mb-9">
+        <span className="inline-block px-3.5 py-1 rounded-full border border-emerald-200 bg-emerald-50 text-[#15803d] text-xs font-bold mb-2">
+          বিশেষ অফার প্যাকেজ
+        </span>
+        <h2 className="m-0 text-[#14532d] text-2xl sm:text-3xl md:text-4xl font-extrabold leading-tight">
+          যা যা পাচ্ছেন
+        </h2>
+        <p className="mt-1.5 text-[#4b5563] text-xs sm:text-sm font-semibold">
+          ইলিশের আচারের সাথে থাকছে দারুণ দুটি স্পেশাল উপহার
+        </p>
+      </div>
 
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
-            এই প্যাকে আপনি যা যা পাচ্ছেন
-          </h2>
-
-          <p className="text-sm sm:text-base font-bold text-slate-600 mt-2 max-w-xl mx-auto">
-            ২০০ গ্রাম ইলিশের আচার অর্ডার করলে বাকি ২টি আইটেম (২০০ গ্রাম) সম্পূর্ণ ফ্রিতে পৌঁছে যাবে আপনার ঠিকানায়!
-          </p>
-        </div>
-
-        {/* 3 Food Item Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-          {comboItems.map((item, idx) => (
+      {/* 3 Product Cards Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5 sm:gap-5">
+        {items.map((item) => (
+          <div
+            key={item.id}
+            className="group relative bg-white border border-[#e5e7eb] rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col"
+          >
+            {/* Image Container with Badge */}
             <div
-              key={item.id}
-              className={`rounded-3xl overflow-hidden bg-white border-2 transition-all duration-300 shadow-lg hover:shadow-2xl flex flex-col ${
-                item.isFree
-                  ? 'border-emerald-300 ring-2 ring-emerald-500/20'
-                  : 'border-amber-300 ring-2 ring-amber-500/20'
-              }`}
+              className="relative w-full aspect-[4/3] overflow-hidden bg-slate-50 cursor-zoom-in"
+              onClick={() => openLightbox(item.image, item.alt)}
             >
-              {/* Image with Tag */}
-              <div className="relative aspect-square w-full bg-slate-100 overflow-hidden">
-                <Image
-                  src={item.image}
-                  alt={item.name}
-                  fill
-                  className="object-cover transition-transform duration-500 hover:scale-105"
-                  unoptimized
-                />
+              <Image
+                src={item.image}
+                alt={item.alt}
+                fill
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                unoptimized
+              />
 
-                {/* Free Badge */}
-                <div
-                  className={`absolute top-3 left-3 text-xs font-black px-3 py-1.5 rounded-xl shadow-md ${
-                    item.isFree
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-amber-500 text-slate-950'
+              {/* Corner Weight / Free Badge */}
+              <div
+                className={`absolute top-2.5 right-2.5 px-2.5 py-1 rounded-full text-xs font-bold text-white shadow-md z-10 ${
+                  item.badgeType === 'main'
+                    ? 'bg-[#15803d]'
+                    : 'bg-[#d97706]'
+                }`}
+              >
+                {item.badge}
+              </div>
+            </div>
+
+            {/* Content Area */}
+            <div className="p-3.5 sm:p-4 text-center flex-1 flex flex-col justify-between">
+              <div>
+                <span
+                  className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold mb-1.5 ${
+                    item.tagType === 'main'
+                      ? 'bg-emerald-50 text-[#15803d]'
+                      : 'bg-amber-50 text-[#b45309]'
                   }`}
                 >
                   {item.tag}
-                </div>
+                </span>
 
-                {/* Weight Tag */}
-                <div className="absolute bottom-3 right-3 bg-slate-950/85 backdrop-blur-sm text-amber-300 text-xs sm:text-sm font-black px-3 py-1 rounded-lg border border-amber-400/30">
-                  পরিমাণ: {item.weight}
-                </div>
+                <h3 className="m-0 mb-1 text-[#14532d] text-lg sm:text-xl font-extrabold leading-snug">
+                  {item.name}
+                </h3>
+
+                <p className="m-0 mx-auto text-[#6b7280] text-xs sm:text-[13px] leading-relaxed line-clamp-2">
+                  {item.description}
+                </p>
               </div>
 
-              {/* Content */}
-              <div className="p-5 flex-1 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[11px] font-black text-slate-400 uppercase tracking-wider">
-                      আইটেম #{idx + 1}
-                    </span>
-                    {item.isFree && (
-                      <span className="text-[11px] font-black text-red-600 bg-red-50 px-2 py-0.5 rounded-full border border-red-200">
-                        সম্পূর্ণ ফ্রি! 🎁
-                      </span>
-                    )}
-                  </div>
-
-                  <h3 className="text-lg font-black text-slate-900 mb-2">
-                    {item.name}
-                  </h3>
-
-                  <p className="text-xs text-slate-600 mb-4 leading-relaxed font-medium">
-                    {item.description}
-                  </p>
-
-                  {/* Bullet points */}
-                  <ul className="space-y-2 mb-4 text-xs font-semibold text-slate-700">
-                    {item.features.map((feat, fIdx) => (
-                      <li key={fIdx} className="flex items-start gap-2">
-                        <Check className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                        <span>{feat}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Card Bottom status */}
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-500">পরিমাণ:</span>
-                  <span className="text-sm font-black text-emerald-700">{item.weight}</span>
-                </div>
+              {/* Weight Pill Button */}
+              <div className="mt-3">
+                <span
+                  className={`inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 min-h-[34px] rounded-full text-sm font-extrabold whitespace-nowrap shadow-sm border ${
+                    item.tagType === 'main'
+                      ? 'bg-emerald-50/80 text-[#15803d] border-emerald-200/80'
+                      : 'bg-amber-50/80 text-[#b45309] border-amber-200/80'
+                  }`}
+                >
+                  <span className="text-sm">{item.tagType === 'main' ? '⚖' : '🎁'}</span>
+                  <span>{item.weight}</span>
+                </span>
               </div>
             </div>
-          ))}
-        </div>
-
-        {/* Simple & Clean Order Action */}
-        <div className="text-center mt-8">
-          <button
-            onClick={scrollToOrder}
-            className="inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-emerald-700 to-emerald-800 hover:from-emerald-800 hover:to-emerald-900 text-white font-black text-base sm:text-lg px-8 py-4 rounded-2xl shadow-xl shadow-emerald-800/25 transition-all duration-300 active:scale-95"
-          >
-            <ShoppingBag className="w-5 h-5 text-amber-300" />
-            <span>এই কম্বো অর্ডার করতে চাই (৳৭৯৯)</span>
-          </button>
-          <p className="text-xs text-slate-500 mt-2 font-bold">
-            সারা বাংলাদেশে ডেলিভারি চার্জ সম্পূর্ণ ফ্রি
-          </p>
-        </div>
+          </div>
+        ))}
       </div>
+
+      {/* Image Lightbox Modal */}
+      {activeLightboxImg && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-[999999] bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={closeLightbox}
+        >
+          <button
+            type="button"
+            onClick={closeLightbox}
+            aria-label="Close"
+            className="fixed top-4 right-4 sm:top-6 sm:right-6 w-11 h-11 rounded-full bg-white/20 hover:bg-white/30 text-white text-2xl flex items-center justify-center cursor-pointer transition-transform hover:rotate-90 z-[1000000]"
+          >
+            ✕
+          </button>
+
+          <div
+            className="relative max-w-[92vw] max-h-[88vh] aspect-auto overflow-hidden rounded-xl shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={activeLightboxImg.src}
+              alt={activeLightboxImg.alt}
+              className="max-w-[90vw] max-h-[85vh] object-contain rounded-xl"
+            />
+          </div>
+        </div>
+      )}
     </section>
   );
 }

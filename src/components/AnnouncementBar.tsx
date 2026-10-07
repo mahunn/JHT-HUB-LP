@@ -10,7 +10,7 @@ interface AnnouncementBarProps {
 }
 
 export default function AnnouncementBar({
-  text = '🎉 ধামাকা অফার: আজই অর্ডার করলে সারা বাংলাদেশে ডেলিভারি সম্পূর্ণ ফ্রি!',
+  text = '🎉 ইলিশের আচারে গরু ও বালাচাও ফ্রি!',
   active = true,
   countdownHours = 12,
 }: AnnouncementBarProps) {
@@ -42,19 +42,21 @@ export default function AnnouncementBar({
   const pad = (n: number) => n.toString().padStart(2, '0');
 
   return (
-    <div className="bg-gradient-to-r from-emerald-900 via-emerald-800 to-emerald-900 text-white text-xs sm:text-sm py-2.5 px-4 sticky top-0 z-40 shadow-md animate-gradient relative overflow-hidden">
-      {/* Shimmer overlay */}
-      <div className="absolute inset-0 animate-shimmer pointer-events-none" />
+    <div className="bg-gradient-to-r from-emerald-950 via-emerald-800 to-emerald-950 text-white py-1.5 px-2.5 sm:px-4 sticky top-0 z-40 shadow-sm relative overflow-hidden font-['Anek_Bangla',sans-serif] min-h-[36px] flex items-center">
+      {/* Subtle Shimmer */}
+      <div className="absolute inset-0 animate-shimmer pointer-events-none opacity-30" />
 
-      <div className="max-w-5xl mx-auto flex items-center justify-between gap-3 relative z-10">
-        <span className="font-semibold truncate flex items-center gap-1.5">
-          <Sparkles className="w-3.5 h-3.5 text-amber-300 flex-shrink-0" />
-          {text}
-        </span>
+      <div className="max-w-5xl mx-auto flex items-center justify-between gap-1.5 sm:gap-3 relative z-10 w-full whitespace-nowrap">
+        {/* Crisp Text - Never Cropped, Perfectly Sized */}
+        <div className="font-black flex items-center gap-1.5 text-[11px] min-[360px]:text-[12px] sm:text-sm text-white drop-shadow-xs whitespace-nowrap">
+          <Sparkles className="w-3 h-3 min-[360px]:w-3.5 min-[360px]:h-3.5 text-amber-300 flex-shrink-0 animate-pulse" />
+          <span>{text}</span>
+        </div>
 
-        <div className="flex items-center gap-1.5 text-[11px] font-bold bg-white/15 backdrop-blur-sm px-3 py-1.5 rounded-full flex-shrink-0 border border-white/10">
-          <Clock className="w-3 h-3 text-amber-300" />
-          <span className="font-mono text-white tracking-wider">
+        {/* Compact Timer Pill */}
+        <div className="flex items-center gap-1 text-[10px] min-[360px]:text-[11px] sm:text-xs font-black bg-black/35 backdrop-blur-sm px-2 py-0.5 rounded-full flex-shrink-0 border border-white/20 shadow-xs whitespace-nowrap">
+          <Clock className="w-2.5 h-2.5 min-[360px]:w-3 min-[360px]:h-3 text-amber-300" />
+          <span className="font-mono text-white tracking-wider font-bold">
             {pad(timeLeft.hours)}:{pad(timeLeft.minutes)}:{pad(timeLeft.seconds)}
           </span>
         </div>

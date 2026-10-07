@@ -5,10 +5,10 @@ import { ProductData, StoreSettings } from '@/types/landing';
 import AnnouncementBar from '@/components/AnnouncementBar';
 import HeroSection from '@/components/HeroSection';
 import ComboItemsBreakdown from '@/components/ComboItemsBreakdown';
+import FoodPairingSection from '@/components/FoodPairingSection';
 import FeaturesGrid from '@/components/FeaturesGrid';
+import StorageGuideSection from '@/components/StorageGuideSection';
 import CustomerReviews from '@/components/CustomerReviews';
-import FaqSection from '@/components/FaqSection';
-import TrustBadges from '@/components/TrustBadges';
 import CheckoutOrderForm from '@/components/CheckoutOrderForm';
 import FloatingActions from '@/components/FloatingActions';
 import Footer from '@/components/Footer';
@@ -64,7 +64,7 @@ export default function LandingPageClient({
   }, []);
 
   return (
-    <main className="min-h-screen flex flex-col bg-white">
+    <main className="min-h-screen flex flex-col bg-white font-['Anek_Bangla','Hind_Siliguri',sans-serif]">
       {/* Announcement Bar */}
       <AnnouncementBar
         text={settings.announcementText}
@@ -72,36 +72,34 @@ export default function LandingPageClient({
         countdownHours={product.countdownHours}
       />
 
-      {/* Hero Section */}
+      {/* 1. Hero Section (Bilashfood-style tilted image, big offer price, glow CTA) */}
       <HeroSection product={product} />
 
-      {/* Combo Breakdown (The 3 Items: Ilish Achar, Gorur Achar, Chingri Balachao) */}
+      {/* 2. What You Get / যা যা পাচ্ছেন (3 items: Ilish 200g, Beef 100g Free, Balachao 100g Free with Lightbox) */}
       <ComboItemsBreakdown />
 
-      {/* Features Grid (Why JHT Food is best) */}
-      <FeaturesGrid features={product.features} />
+      {/* 3. Food Pairing / ইলিশের আচার ও বালাচাও যেভাবে খেতে পারবেন (4 pairings: ভাত, খিচুড়ি, মুড়ি, পিঠা) */}
+      <FoodPairingSection />
 
-      {/* Customer Reviews */}
+      {/* 4. Why Our Ilish Achar is Best / কেন সেরা আমাদের ইলিশ আচার? (4 feature cards) */}
+      <FeaturesGrid />
+
+      {/* 5. Storage & Caution / সংরক্ষণ ও সতর্কতা (5 storage guidelines) */}
+      <StorageGuideSection />
+
+      {/* 6. Customer Reviews (Clean, simple testimonials) */}
       {product.reviews && product.reviews.length > 0 && (
         <CustomerReviews reviews={product.reviews} />
       )}
 
-      {/* FAQ Section */}
-      {product.faqList && product.faqList.length > 0 && (
-        <FaqSection faqList={product.faqList} />
-      )}
-
-      {/* Trust Badges */}
-      <TrustBadges trustBadges={product.trustBadges} />
-
-      {/* Checkout Form */}
+      {/* 7. Checkout Form / অর্ডার কনফার্ম করতে তথ্যগুলো দিন (WooCommerce / CartFlows style) */}
       <CheckoutOrderForm product={product} />
 
-      {/* Floating Actions (WhatsApp at bottom right & quick call) */}
+      {/* 8. Floating Actions (WhatsApp & Call) */}
       <FloatingActions settings={settings} />
 
-      {/* Footer */}
-      <Footer settings={settings} product={product} />
+      {/* 9. Footer */}
+      <Footer />
     </main>
   );
 }
