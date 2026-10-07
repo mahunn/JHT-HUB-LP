@@ -21,15 +21,27 @@ import {
   Sparkles,
   ShieldCheck,
   Loader2,
+  CheckCircle2,
+  Zap,
+  KeyRound,
+  RotateCcw,
 } from 'lucide-react';
+
+const AUTH_COOKIE = 'admin_session';
+const STORAGE_AUTH = 'jht_admin_auth';
+const STORAGE_DEVICE = 'jht_admin_device_remember';
+const STORAGE_USER = 'jht_admin_remembered_user';
+const STORAGE_PASS = 'jht_admin_remembered_pass';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [usernameInput, setUsernameInput] = useState<string>('');
+  const [usernameInput, setUsernameInput] = useState<string>('admin1');
   const [passwordInput, setPasswordInput] = useState<string>('');
+  const [rememberDevice, setRememberDevice] = useState<boolean>(true);
+  const [hasSavedCredentials, setHasSavedCredentials] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [authError, setAuthError] = useState<string>('');
@@ -37,26 +49,48 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [abandonedLeadsCount, setAbandonedLeadsCount] = useState<number>(0);
 
+  // 1. Initial Device & Session Check (Runs once on mount)
   useEffect(() => {
-    // Check if session cookie or persistent localStorage flag exists
-    const hasCookie = typeof document !== 'undefined' && document.cookie.includes('admin_session=authenticated');
-    const hasLocal = typeof window !== 'undefined' && localStorage.getItem('jht_admin_auth') === '1';
+    if (typeof window === 'undefined') return;
 
-    if (hasCookie || hasLocal) {
-      setIsAuthenticated(true);
-      if (hasLocal && !hasCookie) {
-        document.cookie = 'admin_session=authenticated; path=/; max-age=315360000; SameSite=Lax';
-      }
-      if (hasCookie && !hasLocal) {
-        localStorage.setItem('jht_admin_auth', '1');
-      }
+    // Check all persistent indicators
+    const hasCookie = document.cookie.includes(`${AUTH_COOKIE}=authenticated`);
+    const hasLocalAuth = localStorage.getItem(STORAGE_AUTH) === '1';
+    const hasDeviceRemember = localStorage.getItem(STORAGE_DEVICE) === 'true';
+
+    // Retrieve saved credentials if previously saved on this device
+    const savedUser = localStorage.getItem(STORAGE_USER);
+    const savedPass = localStorage.getItem(STORAGE_PASS);
+
+    if (savedUser) {
+      setUsernameInput(savedUser);
     }
+    if (savedPass) {
+      setPasswordInput(savedPass);
+    }
+    if (savedUser && savedPass) {
+      setHasSavedCredentials(true);
+    }
+
+    // If user is already authenticated on this device, keep them logged in permanently!
+    if (hasCookie || hasLocalAuth || hasDeviceRemember) {
+      setIsAuthenticated(true);
+
+      // Re-assert both long-lived cookie (10 years) and localStorage
+      document.cookie = `${AUTH_COOKIE}=authenticated; path=/; max-age=315360000; SameSite=Lax`;
+      localStorage.setItem(STORAGE_AUTH, '1');
+      localStorage.setItem(STORAGE_DEVICE, 'true');
+
+      setCheckingAuth(false);
+      return;
+    }
+
     setCheckingAuth(false);
   }, []);
 
+  // 2. Fetch leads count for sidebar badge when authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      // Fetch leads count for badge
       fetch('/api/leads')
         .then((res) => res.json())
         .then((data) => {
@@ -69,28 +103,47 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   }, [isAuthenticated, pathname]);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // 3. Handle Login
+  const handleLogin = async (e?: React.FormEvent, customUser?: string, customPass?: string) => {
+    if (e) e.preventDefault();
     setAuthError('');
     setIsSubmitting(true);
+
+    const userToSubmit = (customUser ?? usernameInput).trim();
+    const passToSubmit = (customPass ?? passwordInput).trim();
 
     try {
       const res = await fetch('/api/admin/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          username: usernameInput.trim(),
-          password: passwordInput.trim(),
+          username: userToSubmit,
+          password: passToSubmit,
         }),
       });
       const data = await res.json();
+
       if (data.success) {
-        localStorage.setItem('jht_admin_auth', '1');
-        document.cookie = 'admin_session=authenticated; path=/; max-age=315360000; SameSite=Lax';
+        // Set permanent 10-year session cookie
+        document.cookie = `${AUTH_COOKIE}=authenticated; path=/; max-age=315360000; SameSite=Lax`;
+
+        // Remember login on this device permanently
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(STORAGE_AUTH, '1');
+          if (rememberDevice) {
+            localStorage.setItem(STORAGE_DEVICE, 'true');
+            localStorage.setItem(STORAGE_USER, userToSubmit);
+            localStorage.setItem(STORAGE_PASS, passToSubmit);
+            setHasSavedCredentials(true);
+          } else {
+            localStorage.setItem(STORAGE_USER, userToSubmit);
+          }
+        }
+
         setIsAuthenticated(true);
         router.refresh();
       } else {
-        setAuthError(data.error || 'ভুল ইউজারনেম অথবা পাসওয়ার্ড! আবার চেষ্টা করুন।');
+        setAuthError(data.error || 'ভুল ইউজারনেম অথবা পাসওয়ার্ড! অনুগ্রহ করে আবার চেষ্টা করুন।');
       }
     } catch (err: any) {
       setAuthError('সার্ভারে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।');
@@ -99,10 +152,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   };
 
+  // 4. Handle Logout
   const handleLogout = async () => {
     try {
-      localStorage.removeItem('jht_admin_auth');
-      document.cookie = 'admin_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(STORAGE_AUTH);
+        localStorage.removeItem(STORAGE_DEVICE);
+      }
+      document.cookie = `${AUTH_COOKIE}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
       await fetch('/api/admin/auth', { method: 'DELETE' });
     } catch (e) {
       console.error(e);
@@ -111,10 +168,29 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     router.refresh();
   };
 
+  // 5. Fill default credentials helper
+  const handleFillDefault = () => {
+    setUsernameInput('admin1');
+    setPasswordInput('adminjhthub1');
+    setAuthError('');
+  };
+
+  // 6. Clear saved credentials on device
+  const handleClearSaved = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(STORAGE_USER);
+      localStorage.removeItem(STORAGE_PASS);
+      localStorage.removeItem(STORAGE_DEVICE);
+      setHasSavedCredentials(false);
+      setPasswordInput('');
+    }
+  };
+
   if (checkingAuth) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center text-white">
-        <div className="animate-spin w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full" />
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white gap-3">
+        <div className="animate-spin w-9 h-9 border-4 border-emerald-500 border-t-transparent rounded-full" />
+        <span className="text-xs text-slate-400 font-medium">অ্যাডমিন যাচাই করা হচ্ছে...</span>
       </div>
     );
   }
@@ -123,13 +199,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-slate-900/95 border border-slate-800 rounded-3xl p-8 shadow-2xl backdrop-blur-xl text-white">
-          <div className="w-20 h-20 relative mx-auto mb-4 bg-white/10 rounded-2xl p-2 border border-white/10 flex items-center justify-center shadow-inner">
+        <div className="max-w-md w-full bg-slate-900/95 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl text-white">
+          <div className="w-16 h-16 relative mx-auto mb-3 bg-white/10 rounded-2xl p-2 border border-white/10 flex items-center justify-center shadow-inner">
             <Image
               src="/logo.png"
               alt="JHT HUB Logo"
-              width={64}
-              height={64}
+              width={56}
+              height={56}
               className="object-contain"
             />
           </div>
@@ -139,36 +215,97 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <p className="text-xs text-slate-400 mt-1">কন্ট্রোল প্যানেলে প্রবেশ করতে লগইন করুন</p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
+          {/* Quick 1-Click Login Card (if credentials remembered on this device) */}
+          {hasSavedCredentials && (
+            <div className="mb-5 p-4 bg-emerald-950/40 border border-emerald-500/40 rounded-2xl">
+              <div className="flex items-center justify-between gap-3 mb-2.5">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                    <Zap className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-white">এই ডিভাইসে তথ্য সংরক্ষিত আছে</p>
+                    <p className="text-[11px] text-emerald-400 font-medium">ইউজার: {usernameInput}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleClearSaved}
+                  title="সংরক্ষিত তথ্য মুছুন"
+                  className="text-[10px] text-slate-400 hover:text-red-400 transition-colors"
+                >
+                  মুছুন
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleLogin(undefined, usernameInput, passwordInput)}
+                disabled={isSubmitting}
+                className="w-full bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-950/60"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>প্রবেশ করা হচ্ছে...</span>
+                  </>
+                ) : (
+                  <>
+                    <KeyRound className="w-3.5 h-3.5" />
+                    <span>এক ক্লিকে সরাসরি প্রবেশ করুন</span>
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+
+          <form id="admin-login-form" autoComplete="on" onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1.5 flex items-center gap-1.5">
+              <label htmlFor="admin-username" className="block text-xs font-bold text-slate-300 mb-1.5 flex items-center gap-1.5">
                 <User className="w-3.5 h-3.5 text-emerald-400" />
                 <span>ইউজারনেম</span>
               </label>
               <div className="relative">
                 <input
+                  id="admin-username"
+                  name="username"
                   type="text"
                   required
-                  autoFocus
+                  autoComplete="username"
                   value={usernameInput}
                   onChange={(e) => setUsernameInput(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-800/90 border border-slate-700 rounded-xl text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                  placeholder="admin1"
+                  className="w-full px-4 py-3 bg-slate-800/90 border border-slate-700 rounded-xl text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all placeholder:text-slate-500"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1.5 flex items-center gap-1.5">
-                <Lock className="w-3.5 h-3.5 text-emerald-400" />
-                <span>পাসওয়ার্ড</span>
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label htmlFor="admin-password" className="block text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                  <Lock className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>পাসওয়ার্ড</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={handleFillDefault}
+                  className="text-[11px] text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>ডিফল্ট তথ্য বসান</span>
+                </button>
+              </div>
               <div className="relative">
                 <input
+                  id="admin-password"
+                  name="password"
                   type={showPassword ? 'text' : 'password'}
                   required
+                  autoComplete="current-password"
                   value={passwordInput}
                   onChange={(e) => setPasswordInput(e.target.value)}
-                  className="w-full px-4 py-3 pr-11 bg-slate-800/90 border border-slate-700 rounded-xl text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                  placeholder="••••••••••••"
+                  className="w-full px-4 py-3 pr-11 bg-slate-800/90 border border-slate-700 rounded-xl text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all placeholder:text-slate-500"
                 />
                 <button
                   type="button"
@@ -179,6 +316,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+            </div>
+
+            {/* Remember Me Checkbox */}
+            <div className="flex items-center justify-between pt-1">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={rememberDevice}
+                  onChange={(e) => setRememberDevice(e.target.checked)}
+                  className="w-4 h-4 rounded text-emerald-600 bg-slate-800 border-slate-700 focus:ring-emerald-500 focus:ring-offset-slate-900 rounded"
+                />
+                <span className="text-xs text-slate-300 font-medium">এই ডিভাইসে সবসময় মনে রাখুন</span>
+              </label>
+              <span className="text-[10px] text-emerald-400 bg-emerald-950/60 border border-emerald-800/50 px-2 py-0.5 rounded-full font-semibold">
+                ১০ বছর স্থায়ী
+              </span>
             </div>
 
             {authError && (

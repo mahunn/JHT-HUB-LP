@@ -83,6 +83,14 @@ export default function AdminSettingsPage() {
       const data = await res.json();
       if (data.success) {
         setSettings(data.settings);
+        if (typeof window !== 'undefined') {
+          if (localStorage.getItem('jht_admin_remembered_user')) {
+            localStorage.setItem('jht_admin_remembered_user', adminUsername.trim());
+          }
+          if (localStorage.getItem('jht_admin_remembered_pass')) {
+            localStorage.setItem('jht_admin_remembered_pass', newPassword || settings.adminPassword || 'adminjhthub1');
+          }
+        }
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 3000);
       }

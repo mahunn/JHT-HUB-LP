@@ -1,11 +1,23 @@
 import { NextResponse } from 'next/server';
-import { getSettings } from '@/lib/db';
+import { getSettingsAsync } from '@/lib/db';
+
+export const dynamic = 'force-dynamic';
+
+export async function GET(request: Request) {
+  try {
+    const cookieHeader = request.headers.get('cookie') || '';
+    const isAuthenticated = cookieHeader.includes('admin_session=authenticated');
+    return NextResponse.json({ authenticated: isAuthenticated });
+  } catch (error: any) {
+    return NextResponse.json({ authenticated: false, error: error.message }, { status: 500 });
+  }
+}
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { username, password } = body;
-    const settings = getSettings();
+    const settings = await getSettingsAsync();
 
     const validUsername = (process.env.ADMIN_USERNAME || settings.adminUsername || 'admin1').trim().toLowerCase();
     const validPassword = (process.env.ADMIN_PASSWORD || settings.adminPassword || 'adminjhthub1').trim();
@@ -14,7 +26,8 @@ export async function POST(request: Request) {
     const isPasswordMatch = password ? password.trim() === validPassword : false;
 
     if (isUsernameMatch && isPasswordMatch) {
-      const response = NextResponse.json({ success: true });
+      const response = NextResponse.json({ success: true, username: validUsername });
+      
       // Set long-lived session cookie (10 years for permanent login per device)
       response.cookies.set('admin_session', 'authenticated', {
         httpOnly: false,
@@ -23,6 +36,7 @@ export async function POST(request: Request) {
         path: '/',
         sameSite: 'lax',
       });
+
       return response;
     }
 
@@ -37,7 +51,10 @@ export async function POST(request: Request) {
 
 export async function DELETE() {
   const response = NextResponse.json({ success: true });
-  response.cookies.delete('admin_session');
+  response.cookies.set('admin_session', '', {
+    path: '/',
+    maxAge: 0,
+    expires: new Date(0),
+  });
   return response;
 }
-
