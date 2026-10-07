@@ -85,11 +85,8 @@ export default function FeaturesGrid() {
             className="absolute top-0 -left-[100%] w-[70%] h-full bg-gradient-to-r from-transparent via-white/25 to-transparent -skew-x-[20deg] animate-[orderShine_3.5s_infinite]"
             aria-hidden="true"
           />
-          <span className="relative z-10 flex items-center gap-2">
-            <span>এখনই অর্ডার করুন</span>
-            <span className="text-amber-300 text-sm sm:text-base font-black bg-black/25 border border-amber-300/40 px-2.5 py-0.5 rounded-lg">
-              ৳৭৯৯
-            </span>
+          <span className="relative z-10 text-lg sm:text-xl font-black">
+            এখনই অর্ডার করুন
           </span>
           <b className="relative z-10 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-xl font-bold group-hover:translate-x-1.5 transition-transform">
             →
