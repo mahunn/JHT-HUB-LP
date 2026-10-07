@@ -59,6 +59,7 @@ const slides: CarouselSlide[] = [
 export default function HeroSection({ product }: HeroSectionProps) {
   const defaultPackage = product.packages?.find((p) => p.isDefault) || product.packages?.[0];
   const offerPrice = defaultPackage ? defaultPackage.offerPrice : 799;
+  const regularPrice = defaultPackage ? (defaultPackage.regularPrice || 1200) : 1200;
 
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isPaused, setIsPaused] = useState<boolean>(false);
@@ -262,22 +263,192 @@ export default function HeroSection({ product }: HeroSectionProps) {
           </div>
         </div>
 
-        {/* Main Offer Title Area */}
-        <div className="text-center px-2 mt-2">
-          <h1 className="m-0 text-[#14532d] text-4xl sm:text-5xl font-extrabold leading-tight tracking-tight">
-            মাত্র <span className="text-[#15803d]">৳{offerPrice} টাকায়</span>
-          </h1>
-
-          <div className="inline-block mt-1 text-[#166534] text-2xl sm:text-3xl font-extrabold leading-tight">
-            স্পেশাল ইলিশের আচার কম্বো
+        {/* ============================================================== */}
+        {/* EYE-CATCHING PRICE BANNER CARD (EXACTLY MATCHING USER REFERENCE) */}
+        {/* ============================================================== */}
+        <div className="mt-4 mb-5 text-center">
+          {/* Main Combo Headline */}
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-100 text-[#14532d] text-xs sm:text-sm font-black border border-emerald-300/80 shadow-xs mb-2">
+            <Gift className="w-3.5 h-3.5 text-amber-600 animate-bounce" />
+            <span>ধামাকা ৩-ইন-১ অফার প্যাকেজ</span>
           </div>
 
-          {/* Offer Line */}
-          <p className="mt-3 mb-6 text-[#374151] text-sm sm:text-base leading-relaxed font-semibold">
-            <strong className="text-[#15803d] font-extrabold">গরুর আচার ও চিংড়ি বালাচাও ফ্রি</strong>
-            <b className="mx-2 text-[#9ca3af] font-normal">+</b>
-            <strong className="text-[#15803d] font-extrabold">ডেলিভারি চার্জ ফ্রি</strong>
-          </p>
+          <h1 className="m-0 text-[#14532d] text-2xl sm:text-3xl md:text-4xl font-black leading-tight tracking-tight">
+            স্পেশাল ইলিশের আচার কম্বো
+          </h1>
+
+          {/* Deep Green Price Box with Red Cross & Yellow Double-Underline */}
+          <div className="relative mt-3.5 mx-auto rounded-2xl sm:rounded-3xl bg-gradient-to-b from-[#14532d] via-[#166534] to-[#0f3d21] p-4 sm:p-6 text-white shadow-xl shadow-emerald-950/25 border-2 border-emerald-500/40 overflow-hidden">
+            {/* Subtle radial sheen */}
+            <div className="absolute -top-10 -right-10 w-28 h-28 bg-emerald-400/20 rounded-full blur-xl pointer-events-none" />
+            <div className="absolute -bottom-10 -left-10 w-28 h-28 bg-amber-400/15 rounded-full blur-xl pointer-events-none" />
+
+            {/* Line 1: Previous Price with RED CROSS (Clear & Legible 1200) */}
+            <div className="relative z-10 flex items-center justify-center gap-1.5 sm:gap-2 text-base sm:text-lg md:text-xl font-bold text-white">
+              <span className="tracking-wide text-emerald-100 font-extrabold">পূর্বের মূল্য</span>
+              
+              {/* Only 1200 has the clean red cross mark */}
+              <span className="relative inline-flex items-center justify-center px-2 py-0.5 font-black">
+                <span className="relative z-10 text-2xl sm:text-3xl font-black tracking-wider text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                  {regularPrice}
+                </span>
+                {/* Clean, perfectly proportioned red cross */}
+                <svg
+                  className="absolute -inset-x-1.5 -inset-y-0.5 w-[calc(100%+12px)] h-[calc(100%+4px)] pointer-events-none z-20"
+                  viewBox="0 0 60 28"
+                  preserveAspectRatio="none"
+                >
+                  <line
+                    x1="6"
+                    y1="23"
+                    x2="54"
+                    y2="5"
+                    stroke="#ef4444"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                    opacity="0.95"
+                  />
+                  <line
+                    x1="6"
+                    y1="5"
+                    x2="54"
+                    y2="23"
+                    stroke="#ef4444"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                    opacity="0.95"
+                  />
+                </svg>
+              </span>
+
+              <span className="tracking-wide text-emerald-100 font-extrabold">টাকা</span>
+            </div>
+
+            {/* Line 2: Offer Price with YELLOW DOUBLE UNDERLINE (Maximum Contrast) */}
+            <div className="relative z-10 mt-1 sm:mt-2.5 flex items-center justify-center flex-wrap gap-x-2.5 gap-y-1">
+              <span className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
+                অফার মূল্য
+              </span>
+              <span className="relative inline-block text-3xl sm:text-4xl md:text-5xl font-black text-[#facc15] px-1 tracking-tight">
+                <span>{offerPrice} টাকা</span>
+                {/* Authentic Yellow Double Highlight Curve Underline */}
+                <svg
+                  className="absolute -bottom-2.5 sm:-bottom-3.5 left-0 w-full h-3.5 sm:h-4 text-amber-300 drop-shadow-md pointer-events-none"
+                  viewBox="0 0 120 14"
+                  fill="none"
+                  preserveAspectRatio="none"
+                >
+                  <path
+                    d="M3 4C35 2.5 75 4.5 117 3.5"
+                    stroke="#facc15"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M6 10.5C40 9 80 11.5 114 10"
+                    stroke="#facc15"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </span>
+            </div>
+
+            {/* Savings Badge */}
+            <div className="relative z-10 mt-4 flex items-center justify-center">
+              <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-rose-600 text-white text-xs sm:text-sm font-black shadow-md border border-rose-400/50 animate-pulse">
+                <span>🔥 সরাসরি ৪০১ টাকা সাশ্রয়!</span>
+              </span>
+            </div>
+          </div>
+
+          {/* ============================================================== */}
+          {/* FREE PRODUCTS & FREE DELIVERY SHOWCASE (MAIN PROMINENT HIGHLIGHT) */}
+          {/* ============================================================== */}
+          <div className="mt-4 mx-auto rounded-2xl sm:rounded-3xl bg-gradient-to-br from-emerald-50 via-white to-amber-50/50 border-2 border-emerald-400 p-3.5 sm:p-4 text-left shadow-lg">
+            <div className="flex items-center justify-between mb-3 border-b border-emerald-200/90 pb-2">
+              <div className="flex items-center gap-1.5">
+                <span className="text-base sm:text-lg">🎁</span>
+                <span className="text-xs sm:text-sm font-black text-[#14532d] uppercase tracking-wide">
+                  এই প্যাকেজে যা যা সম্পূর্ণ ফ্রি পাচ্ছেন:
+                </span>
+              </div>
+              <span className="bg-[#15803d] text-white text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded-full shadow-xs">
+                ১০০% বিনামূল্যে
+              </span>
+            </div>
+
+            {/* Free Items List */}
+            <div className="space-y-2">
+              {/* Free Item 1: Gorur Achar */}
+              <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-white border border-emerald-200/80 shadow-xs hover:border-emerald-400 transition-colors">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-lg bg-amber-100 border border-amber-300 text-amber-800 flex items-center justify-center text-sm font-black shrink-0">
+                    🎁
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-xs sm:text-sm font-black text-slate-900 block leading-tight">
+                      ১০০ গ্রাম গরুর মাংসের আচার
+                    </span>
+                    <span className="text-[11px] text-slate-500 font-semibold block truncate">
+                      হাড় ছাড়া ফ্রেশ গরুর মাংসের তুলতুলে চুক্কা আচার
+                    </span>
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 rounded-lg bg-amber-100 text-amber-900 text-xs font-black shrink-0 border border-amber-300 shadow-xs">
+                  সম্পূর্ণ ফ্রি
+                </span>
+              </div>
+
+              {/* Free Item 2: Chingri Balachao */}
+              <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-white border border-emerald-200/80 shadow-xs hover:border-emerald-400 transition-colors">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-lg bg-amber-100 border border-amber-300 text-amber-800 flex items-center justify-center text-sm font-black shrink-0">
+                    🎁
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-xs sm:text-sm font-black text-slate-900 block leading-tight">
+                      ১০০ গ্রাম চিংড়ি শুঁটকি বালাচাও
+                    </span>
+                    <span className="text-[11px] text-slate-500 font-semibold block truncate">
+                      মুচমুচে ফ্রেশ ভাজা পেঁয়াজ-রসুন ও স্পেশাল মশলা
+                    </span>
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 rounded-lg bg-amber-100 text-amber-900 text-xs font-black shrink-0 border border-amber-300 shadow-xs">
+                  সম্পূর্ণ ফ্রি
+                </span>
+              </div>
+
+              {/* Free Delivery */}
+              <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-white border border-emerald-200/80 shadow-xs hover:border-emerald-400 transition-colors">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-100 border border-emerald-300 text-emerald-800 flex items-center justify-center text-sm font-black shrink-0">
+                    🚚
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-xs sm:text-sm font-black text-slate-900 block leading-tight">
+                      সারা বাংলাদেশে ফ্রি হোম ডেলিভারি
+                    </span>
+                    <span className="text-[11px] text-slate-500 font-semibold block truncate">
+                      অগ্রিম ১ টাকাও দিতে হবে না • চেক করে পেমেন্ট
+                    </span>
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 rounded-lg bg-emerald-100 text-[#15803d] text-xs font-black shrink-0 border border-emerald-300 shadow-xs">
+                  ০ টাকা (ফ্রি)
+                </span>
+              </div>
+            </div>
+
+            {/* Total Weight Bottom Strip */}
+            <div className="mt-3 pt-2.5 border-t border-emerald-200/90 flex items-center justify-between flex-wrap gap-2 text-xs font-black text-[#14532d]">
+              <span>মোট প্যাকেজের ওজন:</span>
+              <span className="text-[#14532d] bg-emerald-100 px-3 py-1 rounded-full border border-emerald-300 shadow-2xs">
+                মোট ৪০০ গ্রাম (২০০ গ্রাম কিনলেই ২০০ গ্রাম ফ্রি!)
+              </span>
+            </div>
+          </div>
         </div>
 
         {/* Order Button */}

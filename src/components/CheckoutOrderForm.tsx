@@ -269,31 +269,36 @@ export default function CheckoutOrderForm({ product }: CheckoutOrderFormProps) {
             </h3>
 
             <div className="border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-200 text-sm">
-              {/* Product Row */}
-              <div className="p-3 sm:p-4 flex items-center justify-between gap-3 bg-slate-50/50">
+              {/* Product 1: Main Ilish Achar */}
+              <div className="p-3 sm:p-4 flex items-center justify-between gap-3 bg-white">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-slate-200 flex-shrink-0 bg-white">
+                  <div className="relative w-12 h-12 rounded-xl overflow-hidden border border-emerald-200 flex-shrink-0 bg-slate-50 shadow-xs">
                     <Image
-                      src={singlePkg.image || '/images/combo_banner.jpg'}
-                      alt={singlePkg.banglaName}
+                      src="/images/ilish_achar_real.jpg"
+                      alt="ইলিশের আচার"
                       fill
                       className="object-cover"
                       unoptimized
                     />
                   </div>
                   <div className="min-w-0">
-                    <div className="font-extrabold text-slate-900 leading-tight">
-                      {singlePkg.banglaName}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="font-extrabold text-slate-900 leading-tight text-sm">
+                        ১. ইলিশ মাছের স্পেশাল আচার
+                      </span>
+                      <span className="text-[10px] bg-emerald-100 text-[#15803d] px-1.5 py-0.2 rounded font-bold">
+                        মূল পণ্য
+                      </span>
                     </div>
                     <div className="text-xs text-slate-500 font-semibold mt-0.5">
-                      ইলিশ (২০০ গ্রাম) + গরু ও চিংড়ি বালাচাও ফ্রি (২০০ গ্রাম)
+                      পরিমাণ: {quantity * 200} গ্রাম ({quantity}টি বড় জার)
                     </div>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3 flex-shrink-0">
                   {/* Quantity Stepper */}
-                  <div className="flex items-center border border-slate-300 rounded-lg overflow-hidden bg-white">
+                  <div className="flex items-center border border-slate-300 rounded-lg overflow-hidden bg-white shadow-xs">
                     <button
                       type="button"
                       onClick={() => setQuantity((q) => Math.max(1, q - 1))}
@@ -314,10 +319,100 @@ export default function CheckoutOrderForm({ product }: CheckoutOrderFormProps) {
                     </button>
                   </div>
 
-                  <span className="font-extrabold text-[#15803d] text-base">
-                    ৳{subtotal}
+                  <div className="flex items-baseline gap-1.5 flex-shrink-0">
+                    <span className="text-xs text-rose-500 line-through font-bold">
+                      ৳{(singlePkg.regularPrice || 1200) * quantity}
+                    </span>
+                    <span className="font-extrabold text-[#15803d] text-base">
+                      ৳{subtotal}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Product 2: Free Gorur Achar */}
+              <div className="p-3 sm:p-4 flex items-center justify-between gap-3 bg-amber-50/40 border-t border-slate-200">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="relative w-12 h-12 rounded-xl overflow-hidden border border-amber-300 flex-shrink-0 bg-white shadow-xs">
+                    <Image
+                      src="/images/gorur_achar_real.jpg"
+                      alt="গরুর মাংসের আচার"
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="font-extrabold text-slate-900 leading-tight text-sm">
+                        ২. গরুর মাংসের চুক্কা আচার
+                      </span>
+                      <span className="text-[10px] bg-amber-100 text-amber-800 border border-amber-300 px-1.5 py-0.2 rounded font-black">
+                        ১০০% ফ্রি 🎁
+                      </span>
+                    </div>
+                    <div className="text-xs text-slate-500 font-semibold mt-0.5">
+                      পরিমাণ: {quantity * 100} গ্রাম • তুলতুলে নরম চুক্কা মাংস
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className="text-xs text-slate-400 line-through font-bold">
+                    ৳{250 * quantity}
+                  </span>
+                  <span className="text-xs font-black text-amber-900 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full shadow-2xs">
+                    ৳০ (ফ্রি)
                   </span>
                 </div>
+              </div>
+
+              {/* Product 3: Free Chingri Balachao */}
+              <div className="p-3 sm:p-4 flex items-center justify-between gap-3 bg-amber-50/40 border-t border-slate-200">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="relative w-12 h-12 rounded-xl overflow-hidden border border-amber-300 flex-shrink-0 bg-white shadow-xs">
+                    <Image
+                      src="/images/chingri_balachao_real.jpg"
+                      alt="চিংড়ি বালাচাও"
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="font-extrabold text-slate-900 leading-tight text-sm">
+                        ৩. মচমচে চিংড়ি শুঁটকি বালাচাও
+                      </span>
+                      <span className="text-[10px] bg-amber-100 text-amber-800 border border-amber-300 px-1.5 py-0.2 rounded font-black">
+                        ১০০% ফ্রি 🎁
+                      </span>
+                    </div>
+                    <div className="text-xs text-slate-500 font-semibold mt-0.5">
+                      পরিমাণ: {quantity * 100} গ্রাম • ক্রিস্পি ভাজা রসুন ও পেঁয়াজ
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className="text-xs text-slate-400 line-through font-bold">
+                    ৳{200 * quantity}
+                  </span>
+                  <span className="text-xs font-black text-amber-900 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full shadow-2xs">
+                    ৳০ (ফ্রি)
+                  </span>
+                </div>
+              </div>
+
+              {/* 3-in-1 Package Value Banner */}
+              <div className="px-3.5 py-2.5 bg-gradient-to-r from-emerald-50 via-amber-50 to-emerald-50 border-t border-slate-200 flex items-center justify-between flex-wrap gap-2 text-xs font-black text-[#14532d]">
+                <span className="flex items-center gap-1.5">
+                  <span>📦</span>
+                  <span>মোট ৩টি স্পেশাল জার ({quantity * 400} গ্রাম) একসাথে পাচ্ছেন</span>
+                </span>
+                <span className="text-amber-900 bg-amber-100 px-2.5 py-0.5 rounded-full border border-amber-300">
+                  🎁 ২টি জার সম্পূর্ণ ফ্রি!
+                </span>
               </div>
 
               {/* Subtotal Row */}
@@ -329,13 +424,23 @@ export default function CheckoutOrderForm({ product }: CheckoutOrderFormProps) {
               {/* Shipping Row */}
               <div className="p-3 sm:px-4 flex items-center justify-between text-slate-600 font-bold">
                 <span>Shipment</span>
-                <span className="text-[#15803d]">ফ্রি হোম ডেলিভারি</span>
+                <span className="text-[#15803d] font-extrabold">ফ্রি হোম ডেলিভারি (৳০)</span>
               </div>
 
               {/* Total Row */}
-              <div className="p-3.5 sm:px-4 flex items-center justify-between bg-emerald-50/40 text-base sm:text-lg font-black text-[#14532d]">
-                <span>Total</span>
-                <span className="text-[#15803d] text-xl">৳{grandTotal}</span>
+              <div className="p-3.5 sm:px-4 flex items-center justify-between bg-emerald-50/50 text-base sm:text-lg font-black text-[#14532d]">
+                <div>
+                  <span>Total</span>
+                  <span className="block text-[11px] text-rose-600 font-black">
+                    (সরাসরি {(singlePkg.regularPrice || 1200) * quantity - grandTotal} টাকা সেভ!)
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs text-rose-400 line-through font-bold mr-1.5">
+                    ৳{(singlePkg.regularPrice || 1200) * quantity}
+                  </span>
+                  <span className="text-[#15803d] text-xl font-black">৳{grandTotal}</span>
+                </div>
               </div>
             </div>
           </div>
