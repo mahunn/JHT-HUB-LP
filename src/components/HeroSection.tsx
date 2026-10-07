@@ -284,39 +284,39 @@ export default function HeroSection({ product }: HeroSectionProps) {
             <div className="absolute -bottom-10 -left-10 w-28 h-28 bg-amber-400/15 rounded-full blur-xl pointer-events-none" />
 
             {/* Line 1: Previous Price with RED CROSS (Clear & Legible 1200) */}
-            <div className="relative z-10 flex items-center justify-center gap-1.5 sm:gap-2 text-base sm:text-lg md:text-xl font-bold text-white">
+            <div className="relative z-10 flex items-center justify-center gap-2 text-base sm:text-lg md:text-xl font-bold text-white">
               <span className="tracking-wide text-emerald-100 font-extrabold">পূর্বের মূল্য</span>
               
               {/* Only 1200 has the clean red cross mark */}
-              <span className="relative inline-flex items-center justify-center px-2 py-0.5 font-black">
-                <span className="relative z-10 text-2xl sm:text-3xl font-black tracking-wider text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+              <span className="relative inline-flex items-center justify-center px-2.5 py-0.5 mx-1 font-black">
+                {/* 1200 is large, spacious, and 100% clearly readable */}
+                <span className="relative z-10 text-2xl sm:text-3xl font-black tracking-widest text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]">
                   {regularPrice}
                 </span>
-                {/* Clean, perfectly proportioned red cross */}
+
+                {/* Elegant, thin red cross that clearly marks without covering the numbers */}
                 <svg
-                  className="absolute -inset-x-1.5 -inset-y-0.5 w-[calc(100%+12px)] h-[calc(100%+4px)] pointer-events-none z-20"
-                  viewBox="0 0 60 28"
+                  className="absolute -inset-x-2 -inset-y-2 w-[calc(100%+16px)] h-[calc(100%+16px)] pointer-events-none z-20"
+                  viewBox="0 0 100 50"
                   preserveAspectRatio="none"
                 >
                   <line
-                    x1="6"
-                    y1="23"
-                    x2="54"
-                    y2="5"
-                    stroke="#ef4444"
-                    strokeWidth="3.5"
+                    x1="8"
+                    y1="42"
+                    x2="92"
+                    y2="8"
+                    stroke="#ff3b30"
+                    strokeWidth="2.4"
                     strokeLinecap="round"
-                    opacity="0.95"
                   />
                   <line
-                    x1="6"
-                    y1="5"
-                    x2="54"
-                    y2="23"
-                    stroke="#ef4444"
-                    strokeWidth="3.5"
+                    x1="8"
+                    y1="8"
+                    x2="92"
+                    y2="42"
+                    stroke="#ff3b30"
+                    strokeWidth="2.4"
                     strokeLinecap="round"
-                    opacity="0.95"
                   />
                 </svg>
               </span>
