@@ -66,6 +66,41 @@ export default function FeaturesGrid() {
           </div>
         ))}
       </div>
+
+      {/* Big High-Converting Order Now CTA Button (Red Marked Area) */}
+      <div className="mt-8 sm:mt-10 text-center max-w-lg mx-auto">
+        <a
+          href="#order"
+          onClick={(e) => {
+            e.preventDefault();
+            const orderEl = document.getElementById('order');
+            if (orderEl) {
+              orderEl.scrollIntoView({ behavior: 'smooth' });
+            }
+          }}
+          className="group relative flex items-center justify-center gap-3.5 w-full min-h-[58px] sm:min-h-[62px] px-6 py-3.5 rounded-2xl bg-gradient-to-r from-[#15803d] via-[#166534] to-[#14532d] text-white text-lg sm:text-xl font-black tracking-wide shadow-xl shadow-emerald-900/35 hover:shadow-2xl hover:shadow-emerald-900/50 hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-300 overflow-hidden no-underline"
+        >
+          {/* Animated Shine Sweep Effect */}
+          <span
+            className="absolute top-0 -left-[100%] w-[70%] h-full bg-gradient-to-r from-transparent via-white/25 to-transparent -skew-x-[20deg] animate-[orderShine_3.5s_infinite]"
+            aria-hidden="true"
+          />
+          <span className="relative z-10 flex items-center gap-2">
+            <span>এখনই অর্ডার করুন</span>
+            <span className="text-amber-300 text-sm sm:text-base font-black bg-black/25 border border-amber-300/40 px-2.5 py-0.5 rounded-lg">
+              ৳৭৯৯
+            </span>
+          </span>
+          <b className="relative z-10 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-xl font-bold group-hover:translate-x-1.5 transition-transform">
+            →
+          </b>
+        </a>
+        <p className="mt-2.5 text-xs sm:text-sm text-[#166534] font-extrabold flex items-center justify-center flex-wrap gap-2">
+          <span>🎁 ১০০ গ্রাম গরুর আচার ও ১০০ গ্রাম বালাচাও ফ্রি</span>
+          <span className="text-slate-300">•</span>
+          <span>🚚 ফ্রি হোম ডেলিভারি</span>
+        </p>
+      </div>
     </section>
   );
 }
