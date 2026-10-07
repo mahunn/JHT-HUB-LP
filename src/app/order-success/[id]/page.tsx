@@ -7,6 +7,7 @@ import confetti from 'canvas-confetti';
 import { CheckCircle2, MessageCircle, Phone, Home, ShoppingBag, Truck, Clock } from 'lucide-react';
 import { useState } from 'react';
 import { Order, StoreSettings } from '@/types/landing';
+import { trackPurchase } from '@/lib/pixel';
 
 export default function OrderSuccessPage() {
   const params = useParams();
@@ -38,26 +39,14 @@ export default function OrderSuccessPage() {
           setOrder(data.order);
           setSettings(data.settings);
 
-          // Track Purchase event on success page
-          if (typeof window !== 'undefined') {
-            if ((window as any).fbq) {
-              (window as any).fbq('track', 'Purchase', {
-                content_name: data.order.selectedPackage?.banglaName || data.order.selectedPackage?.name,
-                content_type: 'product',
-                value: data.order.total,
-                currency: 'BDT',
-                num_items: data.order.quantity || 1,
-              });
-            }
-            if ((window as any).ttq) {
-              (window as any).ttq.track('CompletePayment', {
-                content_name: data.order.selectedPackage?.banglaName || data.order.selectedPackage?.name,
-                value: data.order.total,
-                currency: 'BDT',
-                quantity: data.order.quantity || 1,
-              });
-            }
-          }
+          // Track Purchase event safely & deduplicated
+          trackPurchase({
+            orderId: data.order.id,
+            name: data.order.selectedPackage?.banglaName || data.order.selectedPackage?.name,
+            price: data.order.total,
+            currency: 'BDT',
+            quantity: data.order.quantity || 1,
+          });
         }
       } catch (err) {
         console.error(err);

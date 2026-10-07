@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Loader2 } from 'lucide-react';
 import { ProductData } from '@/types/landing';
+import { trackInitiateCheckout, trackPurchase } from '@/lib/pixel';
 
 interface CheckoutOrderFormProps {
   product: ProductData;
@@ -137,26 +138,14 @@ export default function CheckoutOrderForm({ product }: CheckoutOrderFormProps) {
         throw new Error(data.error || 'অর্ডার সম্পন্ন হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।');
       }
 
-      // Trigger tracking pixels if defined
-      if (typeof window !== 'undefined') {
-        const anyWin = window as any;
-        if (typeof anyWin.fbq === 'function') {
-          anyWin.fbq('track', 'Purchase', {
-            value: grandTotal,
-            currency: 'BDT',
-            content_name: singlePkg.banglaName,
-            num_items: quantity,
-          });
-        }
-        if (typeof anyWin.ttq === 'function') {
-          anyWin.ttq.track('CompletePayment', {
-            value: grandTotal,
-            currency: 'BDT',
-            content_name: singlePkg.banglaName,
-            quantity,
-          });
-        }
-      }
+      // Trigger tracking pixels safely & deduplicated
+      trackPurchase({
+        orderId: data.order.id,
+        name: singlePkg.banglaName,
+        price: grandTotal,
+        currency: 'BDT',
+        quantity,
+      });
 
       router.push(`/order-success/${data.order.id}`);
     } catch (err: any) {
@@ -186,6 +175,13 @@ export default function CheckoutOrderForm({ product }: CheckoutOrderFormProps) {
         {/* Clean Checkout Form */}
         <form
           onSubmit={handleSubmit}
+          onFocus={() => {
+            trackInitiateCheckout({
+              name: singlePkg.banglaName,
+              price: grandTotal,
+              quantity,
+            });
+          }}
           className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-xl border border-[#e5e7eb]"
         >
           {/* Error Message */}

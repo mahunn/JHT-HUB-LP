@@ -1,5 +1,6 @@
 'use client';
 
+import { Phone, MessageCircle } from 'lucide-react';
 import { StoreSettings } from '@/types/landing';
 
 interface FloatingActionsProps {
@@ -18,14 +19,55 @@ export default function FloatingActions({ settings }: FloatingActionsProps) {
     'আসসালামু আলাইকুম! JHT Food এর ইলিশের আচার কম্বো (৳৭৯৯) সম্পর্কে জানতে ও সরাসরি অর্ডার করতে চাই।'
   )}`;
 
+  const rawHotline = settings.hotlinePhone || '01522-133748';
+  const cleanHotline = rawHotline.replace(/[^0-9+]/g, '');
+
+  const messengerUrl = settings.messengerUrl?.trim() || '';
+  const cleanMessengerUrl = messengerUrl.startsWith('http')
+    ? messengerUrl
+    : messengerUrl
+    ? `https://m.me/${messengerUrl}`
+    : '';
+
   return (
-    <div className="fixed bottom-5 right-5 z-50">
+    <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-2.5">
+      {/* Hotline Call Button (if configured) */}
+      {cleanHotline && (
+        <a
+          href={`tel:${cleanHotline}`}
+          title={`সরাসরি কল করুন: ${rawHotline}`}
+          className="flex items-center gap-2 bg-[#14532d] hover:bg-[#166534] active:scale-95 text-white p-3 sm:px-3.5 sm:py-2.5 rounded-full shadow-xl shadow-emerald-950/30 transition-all duration-300 ring-3 ring-white hover:-translate-y-0.5 no-underline group"
+        >
+          <Phone className="w-5 h-5 text-emerald-300 fill-current" />
+          <span className="hidden sm:inline-block font-extrabold text-xs pr-1">
+            কল করুন
+          </span>
+        </a>
+      )}
+
+      {/* Messenger Button (if configured) */}
+      {cleanMessengerUrl && (
+        <a
+          href={cleanMessengerUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="মেসেঞ্জারে চ্যাট করুন"
+          className="flex items-center gap-2 bg-[#0084FF] hover:bg-[#0073e6] active:scale-95 text-white p-3 sm:px-3.5 sm:py-2.5 rounded-full shadow-xl shadow-blue-600/30 transition-all duration-300 ring-3 ring-white hover:-translate-y-0.5 no-underline group"
+        >
+          <MessageCircle className="w-5 h-5 fill-current" />
+          <span className="hidden sm:inline-block font-extrabold text-xs pr-1">
+            Messenger
+          </span>
+        </a>
+      )}
+
+      {/* WhatsApp Button */}
       <a
         href={whatsappUrl}
         target="_blank"
         rel="noopener noreferrer"
         title="হোয়াটসঅ্যাপে অর্ডার করুন"
-        className="flex items-center gap-2 bg-[#25D366] hover:bg-[#20ba5a] active:scale-95 text-white p-3.5 sm:px-4 sm:py-3 rounded-full shadow-2xl shadow-green-600/40 transition-all duration-300 ring-4 ring-white"
+        className="flex items-center gap-2 bg-[#25D366] hover:bg-[#20ba5a] active:scale-95 text-white p-3.5 sm:px-4 sm:py-3 rounded-full shadow-2xl shadow-green-600/40 transition-all duration-300 ring-4 ring-white hover:-translate-y-0.5 no-underline group"
       >
         <svg
           className="w-7 h-7 sm:w-6 sm:h-6 fill-current flex-shrink-0"

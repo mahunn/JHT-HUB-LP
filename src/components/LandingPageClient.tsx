@@ -99,7 +99,7 @@ export default function LandingPageClient({
       <FloatingActions settings={settings} />
 
       {/* 9. Footer */}
-      <Footer />
+      <Footer settings={settings} />
     </main>
   );
 }
