@@ -37,50 +37,7 @@ export default function CheckoutOrderForm({ product }: CheckoutOrderFormProps) {
   const subtotal = singlePkg.offerPrice * quantity;
   const grandTotal = subtotal; // Delivery charge is always 0 (Free)
 
-  // Real-time silent lead capture for incomplete checkouts
-  const captureLead = async (phoneVal?: string, nameVal?: string, addrVal?: string, qtyVal?: number) => {
-    let currentPhone = (phoneVal !== undefined ? phoneVal : phone).replace(/[^0-9]/g, '');
-    if (currentPhone.startsWith('8801')) {
-      currentPhone = currentPhone.substring(2);
-    }
-    if (!currentPhone || currentPhone.length < 10) return;
-
-    try {
-      await fetch('/api/leads', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          phone: currentPhone,
-          customerName: (nameVal !== undefined ? nameVal : customerName).trim() || undefined,
-          address: (addrVal !== undefined ? addrVal : address).trim() || undefined,
-          cityZone: 'dhaka',
-          selectedPackage: {
-            id: singlePkg.id,
-            name: singlePkg.name,
-            banglaName: singlePkg.banglaName,
-            price: singlePkg.offerPrice,
-          },
-          quantity: qtyVal || quantity,
-          source: 'checkout_form',
-        }),
-      });
-    } catch {
-      // Silent catch
-    }
-  };
-
-  useEffect(() => {
-    let clean = phone.replace(/[^0-9]/g, '');
-    if (clean.startsWith('8801')) {
-      clean = clean.substring(2);
-    }
-    if (clean.length >= 11) {
-      const timer = setTimeout(() => {
-        captureLead(phone, customerName, address, quantity);
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [phone, customerName, address, quantity]);
+  // Real-time silent lead capture for incomplete checkouts is turned off (Demo mode)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

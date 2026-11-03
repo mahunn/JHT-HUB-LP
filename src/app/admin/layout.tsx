@@ -367,7 +367,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       label: 'অসম্পূর্ণ লিড (Leads)',
       href: '/admin/leads',
       icon: PhoneCall,
-      badge: abandonedLeadsCount > 0 ? abandonedLeadsCount : undefined,
+      badge: 'ডেমো',
     },
     { label: 'ল্যান্ডিং পেইজ এডিটর', href: '/admin/product', icon: Sliders },
     { label: 'সেটিংস ও পিক্সেল', href: '/admin/settings', icon: Settings },

@@ -13,20 +13,25 @@ export default function PixelTracker({ metaPixelId, tiktokPixelId }: PixelTracke
   const cleanTikTokId = tiktokPixelId?.trim() || '';
 
   useEffect(() => {
-    // If the pixel libraries are already loaded and the user navigates, dispatch PageView
+    // Only fire on subsequent client-side route navigation (avoid duplicate on initial load)
     if (typeof window !== 'undefined') {
       const win = window as any;
-      if (cleanMetaId && typeof win.fbq === 'function') {
-        win.fbq('track', 'PageView');
-      }
-      if (cleanTikTokId && typeof win.ttq?.page === 'function') {
-        win.ttq.page();
+      if (win.__initialPixelLoaded) {
+        if (cleanMetaId && typeof win.fbq === 'function') {
+          win.fbq('track', 'PageView');
+        }
+        if (cleanTikTokId && typeof win.ttq?.page === 'function') {
+          win.ttq.page();
+        }
+      } else {
+        win.__initialPixelLoaded = true;
       }
     }
   }, [cleanMetaId, cleanTikTokId]);
 
   return (
     <>
+      {/* 1. Meta (Facebook) Pixel */}
       {cleanMetaId && (
         <>
           <Script
@@ -48,6 +53,7 @@ export default function PixelTracker({ metaPixelId, tiktokPixelId }: PixelTracke
                   content_name: 'স্পেশাল ইলিশের আচার কম্বো ধামাকা অফার',
                   content_category: 'Food & Pickles',
                   content_type: 'product',
+                  content_ids: ['combo-special'],
                   value: 799,
                   currency: 'BDT'
                 });
@@ -67,6 +73,7 @@ export default function PixelTracker({ metaPixelId, tiktokPixelId }: PixelTracke
         </>
       )}
 
+      {/* 2. TikTok Pixel */}
       {cleanTikTokId && (
         <Script
           id="tiktok-pixel"
@@ -82,8 +89,17 @@ export default function PixelTracker({ metaPixelId, tiktokPixelId }: PixelTracke
                 ttq.track('ViewContent', {
                   content_name: 'স্পেশাল ইলিশের আচার কম্বো ধামাকা অফার',
                   content_type: 'product',
+                  content_id: 'combo-special',
                   value: 799,
-                  currency: 'BDT'
+                  currency: 'BDT',
+                  contents: [
+                    {
+                      content_id: 'combo-special',
+                      content_name: 'স্পেশাল ইলিশের আচার কম্বো ধামাকা অফার',
+                      quantity: 1,
+                      price: 799
+                    }
+                  ]
                 });
               }(window, document, 'ttq');
             `,

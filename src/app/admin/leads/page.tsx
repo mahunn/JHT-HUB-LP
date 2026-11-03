@@ -320,6 +320,26 @@ export default function AdminLeadsPage() {
         </div>
       </div>
 
+      {/* Demo Notice Banner */}
+      <div className="bg-amber-50 border border-amber-200/90 rounded-2xl p-4 flex items-center justify-between gap-3 text-amber-900">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center shrink-0 text-amber-700 font-bold text-base">
+            ℹ️
+          </div>
+          <div>
+            <span className="text-xs sm:text-sm font-black block leading-snug">
+              ডেমো প্রিভিউ মোড (Demo Preview Mode)
+            </span>
+            <span className="text-[11px] sm:text-xs text-amber-800 font-medium">
+              অসম্পূর্ণ লিড ট্র্যাকিং অপশনটি বর্তমানে ডেমো মোডে প্রদর্শিত হচ্ছে। লাইভ ভিজিটরদের ট্র্যাকিং সাময়িকভাবে বন্ধ রাখা হয়েছে।
+            </span>
+          </div>
+        </div>
+        <span className="px-3 py-1 bg-amber-200/80 text-amber-900 text-xs font-black rounded-lg shrink-0">
+          ডেমো লিস্ট
+        </span>
+      </div>
+
       {/* KPI Counters */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
         <button
