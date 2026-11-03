@@ -17,8 +17,21 @@ import {
 import { StoreSettings } from '@/types/landing';
 
 export default function AdminSettingsPage() {
-  const [settings, setSettings] = useState<StoreSettings | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [settings, setSettings] = useState<StoreSettings | null>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('jht_cached_settings');
+        if (cached) return JSON.parse(cached);
+      } catch {}
+    }
+    return null;
+  });
+  const [loading, setLoading] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return !localStorage.getItem('jht_cached_settings');
+    }
+    return true;
+  });
   const [saving, setSaving] = useState<boolean>(false);
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
   const [saveError, setSaveError] = useState<string>('');
@@ -35,6 +48,7 @@ export default function AdminSettingsPage() {
       const data = await res.json();
       if (data.success && data.settings) {
         setSettings(data.settings);
+        try { localStorage.setItem('jht_cached_settings', JSON.stringify(data.settings)); } catch {}
       }
     } catch (e) {
       console.error('Failed to load settings:', e);
@@ -80,6 +94,7 @@ export default function AdminSettingsPage() {
       const data = await res.json();
       if (data.success) {
         setSettings(data.settings);
+        try { localStorage.setItem('jht_cached_settings', JSON.stringify(data.settings)); } catch {}
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 4000);
       } else {

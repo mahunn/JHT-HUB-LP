@@ -22,9 +22,30 @@ import {
 import { Order, OrderStatus, Lead } from '@/types/landing';
 
 export default function AdminDashboardPage() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [orders, setOrders] = useState<Order[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('jht_cached_orders');
+        if (cached) return JSON.parse(cached);
+      } catch {}
+    }
+    return [];
+  });
+  const [leads, setLeads] = useState<Lead[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('jht_cached_leads');
+        if (cached) return JSON.parse(cached);
+      } catch {}
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return !localStorage.getItem('jht_cached_orders') && !localStorage.getItem('jht_cached_leads');
+    }
+    return true;
+  });
 
   const fetchData = async () => {
     try {
@@ -35,11 +56,13 @@ export default function AdminDashboardPage() {
       const dataOrders = await resOrders.json();
       const dataLeads = await resLeads.json();
 
-      if (dataOrders.success) {
+      if (dataOrders.success && dataOrders.orders) {
         setOrders(dataOrders.orders);
+        try { localStorage.setItem('jht_cached_orders', JSON.stringify(dataOrders.orders)); } catch {}
       }
-      if (dataLeads.success) {
+      if (dataLeads.success && dataLeads.leads) {
         setLeads(dataLeads.leads);
+        try { localStorage.setItem('jht_cached_leads', JSON.stringify(dataLeads.leads)); } catch {}
       }
     } catch (e) {
       console.error(e);

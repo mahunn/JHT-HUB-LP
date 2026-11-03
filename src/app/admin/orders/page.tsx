@@ -31,8 +31,21 @@ function formatWaPhone(phone: string): string {
 }
 
 export default function AdminOrdersPage() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [orders, setOrders] = useState<Order[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('jht_cached_orders');
+        if (cached) return JSON.parse(cached);
+      } catch {}
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return !localStorage.getItem('jht_cached_orders');
+    }
+    return true;
+  });
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -45,13 +58,14 @@ export default function AdminOrdersPage() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const fetchOrders = async () => {
-    setLoading(true);
+  const fetchOrders = async (silent = false) => {
+    if (!silent && orders.length === 0) setLoading(true);
     try {
       const res = await fetch('/api/orders', { cache: 'no-store' });
       const data = await res.json();
-      if (data.success) {
+      if (data.success && data.orders) {
         setOrders(data.orders);
+        try { localStorage.setItem('jht_cached_orders', JSON.stringify(data.orders)); } catch {}
       }
     } catch (e) {
       console.error(e);
@@ -61,7 +75,7 @@ export default function AdminOrdersPage() {
   };
 
   useEffect(() => {
-    fetchOrders();
+    fetchOrders(orders.length > 0);
   }, []);
 
   const handleStatusChange = async (id: string, newStatus: OrderStatus) => {
@@ -190,7 +204,7 @@ export default function AdminOrdersPage() {
 
         <div className="flex items-center gap-2">
           <button
-            onClick={fetchOrders}
+            onClick={() => fetchOrders()}
             className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold p-2.5 rounded-xl transition-colors"
             title="রিফ্রেশ করুন"
           >

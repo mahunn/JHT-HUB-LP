@@ -31,8 +31,21 @@ import {
 import { Lead, LeadStatus, ComboPackage } from '@/types/landing';
 
 export default function AdminLeadsPage() {
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [leads, setLeads] = useState<Lead[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('jht_cached_leads');
+        if (cached) return JSON.parse(cached);
+      } catch {}
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return !localStorage.getItem('jht_cached_leads');
+    }
+    return true;
+  });
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
@@ -43,13 +56,14 @@ export default function AdminLeadsPage() {
   const [deletingLeadId, setDeletingLeadId] = useState<string | null>(null);
   const [notification, setNotification] = useState<string | null>(null);
 
-  const fetchLeads = async () => {
-    setLoading(true);
+  const fetchLeads = async (silent = false) => {
+    if (!silent && leads.length === 0) setLoading(true);
     try {
       const res = await fetch('/api/leads', { cache: 'no-store' });
       const data = await res.json();
-      if (data.success) {
+      if (data.success && data.leads) {
         setLeads(data.leads);
+        try { localStorage.setItem('jht_cached_leads', JSON.stringify(data.leads)); } catch {}
       }
     } catch (e) {
       console.error('Error loading leads', e);
@@ -59,7 +73,7 @@ export default function AdminLeadsPage() {
   };
 
   useEffect(() => {
-    fetchLeads();
+    fetchLeads(leads.length > 0);
   }, []);
 
   const showToast = (msg: string) => {
@@ -300,7 +314,7 @@ export default function AdminLeadsPage() {
 
         <div className="flex items-center gap-2">
           <button
-            onClick={fetchLeads}
+            onClick={() => fetchLeads()}
             disabled={loading}
             className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors font-semibold text-xs flex items-center gap-1.5"
             title="রিফ্রেশ করুন"

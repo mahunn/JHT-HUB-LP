@@ -55,7 +55,11 @@ const items: OfferItem[] = [
   },
 ];
 
-export default function ComboItemsBreakdown() {
+interface ComboItemsBreakdownProps {
+  galleryImages?: string[];
+}
+
+export default function ComboItemsBreakdown({ galleryImages = [] }: ComboItemsBreakdownProps) {
   const [activeLightboxImg, setActiveLightboxImg] = useState<{ src: string; alt: string } | null>(null);
 
   const openLightbox = (src: string, alt: string) => {
@@ -71,6 +75,21 @@ export default function ComboItemsBreakdown() {
       document.body.style.overflow = '';
     }
   };
+
+  // If user uploaded custom photos in the admin, map them gracefully to each combo card
+  const displayItems = items.map((item, idx) => {
+    let customImg = item.image;
+    if (galleryImages && galleryImages.length > 1) {
+      if (idx === 0 && galleryImages[1]) customImg = galleryImages[1];
+      else if (idx === 1 && galleryImages[2]) customImg = galleryImages[2];
+      else if (idx === 2 && galleryImages[3]) customImg = galleryImages[3];
+      else if (galleryImages[idx]) customImg = galleryImages[idx];
+    }
+    return {
+      ...item,
+      image: customImg || item.image,
+    };
+  });
 
   return (
     <section className="w-full max-w-5xl mx-auto py-10 sm:py-14 px-3 sm:px-4 box-border font-['Anek_Bangla','Hind_Siliguri',sans-serif] text-[#14532d]">
@@ -89,7 +108,7 @@ export default function ComboItemsBreakdown() {
 
       {/* 3 Product Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5 sm:gap-5">
-        {items.map((item) => (
+        {displayItems.map((item) => (
           <div
             key={item.id}
             className="group relative bg-white border border-[#e5e7eb] rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col"

@@ -77,7 +77,7 @@ export default function LandingPageClient({
       <HeroSection product={product} />
 
       {/* 2. What You Get / যা যা পাচ্ছেন (3 items: Ilish 200g, Beef 100g Free, Balachao 100g Free with Lightbox) */}
-      <ComboItemsBreakdown />
+      <ComboItemsBreakdown galleryImages={product.galleryImages} />
 
       {/* 3. Food Pairing / ইলিশের আচার ও বালাচাও যেভাবে খেতে পারবেন (4 pairings: ভাত, খিচুড়ি, মুড়ি, পিঠা) */}
       <FoodPairingSection />

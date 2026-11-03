@@ -8,6 +8,8 @@ const TMP_DB_FILE = path.join('/tmp', 'jht_db.json');
 
 // In-memory cache for fast access
 let memoryDb: DatabaseSchema | null = null;
+let lastCloudFetchTime: number = 0;
+const CLOUD_CACHE_TTL_MS = 25000;
 
 // Cloud Sync Configuration (Supabase & Vercel KV / Upstash Redis)
 function getSupabaseConfig() {
@@ -208,6 +210,10 @@ export function getDb(): DatabaseSchema {
 
 // Asynchronous Cloud & Local Loader
 export async function getDbAsync(): Promise<DatabaseSchema> {
+  const now = Date.now();
+  if (memoryDb && (now - lastCloudFetchTime < CLOUD_CACHE_TTL_MS)) {
+    return memoryDb;
+  }
   const supabase = getSupabaseConfig();
   if (supabase) {
     try {
@@ -230,6 +236,7 @@ export async function getDbAsync(): Promise<DatabaseSchema> {
             orders: cloudData.orders || [],
             leads: cloudData.leads || [],
           };
+          lastCloudFetchTime = Date.now();
           return memoryDb;
         }
       }
@@ -276,6 +283,7 @@ export function saveDb(data: DatabaseSchema): void {
     orders: [...(data.orders || [])],
     leads: [...(data.leads || [])]
   };
+  lastCloudFetchTime = Date.now();
 
   const payload = JSON.stringify(memoryDb, null, 2);
 
@@ -333,6 +341,7 @@ export async function saveDbAsync(data: DatabaseSchema): Promise<void> {
     orders: [...(data.orders || [])],
     leads: [...(data.leads || [])],
   };
+  lastCloudFetchTime = Date.now();
 
   const payload = JSON.stringify(memoryDb, null, 2);
 

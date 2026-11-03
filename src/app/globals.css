@@ -223,3 +223,9 @@ select:focus {
   }
 }
 
+
+
+/* Instant touch and click response without 300ms tap delay */
+button, a, input, select, textarea, [role="button"] {
+  touch-action: manipulation;
+}

@@ -20,8 +20,21 @@ import {
 import { ProductData, ComboPackage, ScentItem, CustomerReview } from '@/types/landing';
 
 export default function AdminProductPage() {
-  const [product, setProduct] = useState<ProductData | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [product, setProduct] = useState<ProductData | null>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('jht_cached_product');
+        if (cached) return JSON.parse(cached);
+      } catch {}
+    }
+    return null;
+  });
+  const [loading, setLoading] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return !localStorage.getItem('jht_cached_product');
+    }
+    return true;
+  });
   const [saving, setSaving] = useState<boolean>(false);
   const [uploadingImage, setUploadingImage] = useState<boolean>(false);
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
@@ -47,6 +60,7 @@ export default function AdminProductPage() {
       const data = await res.json();
       if (data.success) {
         setProduct(data.product);
+        try { localStorage.setItem('jht_cached_product', JSON.stringify(data.product)); } catch {}
       }
     } catch (e) {
       console.error(e);
