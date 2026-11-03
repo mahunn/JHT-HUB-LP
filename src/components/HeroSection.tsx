@@ -19,7 +19,7 @@ interface CarouselSlide {
   alt: string;
 }
 
-const slides: CarouselSlide[] = [
+const defaultSlides: CarouselSlide[] = [
   {
     id: 'combo',
     shortLabel: '৩টি কম্বো একসাথে',
@@ -57,23 +57,63 @@ const slides: CarouselSlide[] = [
 ];
 
 export default function HeroSection({ product }: HeroSectionProps) {
-  const defaultPackage = product.packages?.find((p) => p.isDefault) || product.packages?.[0];
+  const defaultPackage = product?.packages?.find((p) => p.isDefault) || product?.packages?.[0];
   const offerPrice = defaultPackage ? defaultPackage.offerPrice : 799;
   const regularPrice = defaultPackage ? (defaultPackage.regularPrice || 1200) : 1200;
+  const savings = regularPrice > offerPrice ? regularPrice - offerPrice : 0;
+
+  // Build dynamic slides from user-uploaded images if available
+  const userImages: string[] = [];
+  if (product?.mainBannerImage && product.mainBannerImage.trim()) {
+    userImages.push(product.mainBannerImage.trim());
+  }
+  if (Array.isArray(product?.galleryImages)) {
+    product.galleryImages.forEach((img) => {
+      const clean = (img || '').trim();
+      if (clean && !userImages.includes(clean)) {
+        userImages.push(clean);
+      }
+    });
+  }
+
+  const slides: CarouselSlide[] =
+    userImages.length > 0
+      ? userImages.map((img, idx) => {
+          const defaultLabels = ['৩টি কম্বো একসাথে', 'ইলিশের আচার', 'গরুর আচার (ফ্রি)', 'চিংড়ি বালাচাও (ফ্রি)'];
+          const defaultBadges = [
+            'ধামাকা অফার • মোট ৪০০ গ্রাম',
+            'মূল পণ্য • ২০০ গ্রাম',
+            'উপহার • সম্পূর্ণ ফ্রি ১০০ গ্রাম 🎁',
+            'উপহার • সম্পূর্ণ ফ্রি ১০০ গ্রাম 🎁',
+          ];
+          return {
+            id: `custom-slide-${idx}`,
+            shortLabel: defaultLabels[idx] || (idx === 0 ? 'মূল ছবি' : `ছবি ${idx + 1}`),
+            title: defaultLabels[idx] || `${product?.productName || 'স্পেশাল আচার'} (${idx + 1})`,
+            badge: defaultBadges[idx] || '১০০% খাঁটি ও ঘরোয়া স্বাদে',
+            image: img,
+            alt: `${product?.productName || 'JHT Food'} - ছবি ${idx + 1}`,
+            isFree: idx > 1,
+          };
+        })
+      : defaultSlides;
 
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
 
-  // Auto-slide every 4 seconds
+  const activeIndex = currentIndex < slides.length ? currentIndex : 0;
+  const currentSlide = slides[activeIndex] || slides[0];
+
+  // Auto-slide every 4.2 seconds
   useEffect(() => {
-    if (isPaused) return;
+    if (isPaused || slides.length <= 1) return;
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % slides.length);
     }, 4200);
     return () => clearInterval(interval);
-  }, [isPaused]);
+  }, [isPaused, slides.length]);
 
   const goToNext = () => {
     setCurrentIndex((prev) => (prev + 1) % slides.length);
@@ -111,8 +151,6 @@ export default function HeroSection({ product }: HeroSectionProps) {
       el.scrollIntoView({ behavior: 'smooth' });
     }
   };
-
-  const currentSlide = slides[currentIndex];
 
   return (
     <section className="relative w-full overflow-hidden bg-gradient-to-b from-[#faf9f5] via-white to-[#fbfaf6] font-['Anek_Bangla',sans-serif] text-[#14532d] px-3 pb-10 sm:pb-14 box-border">
@@ -166,18 +204,16 @@ export default function HeroSection({ product }: HeroSectionProps) {
                 <div
                   key={slide.id}
                   className={`absolute inset-0 transition-all duration-700 ease-out ${
-                    idx === currentIndex
+                    idx === activeIndex
                       ? 'opacity-100 scale-100 pointer-events-auto'
                       : 'opacity-0 scale-95 pointer-events-none'
                   }`}
                 >
-                  <Image
+                  <img
                     src={slide.image}
                     alt={slide.alt}
-                    fill
-                    priority={idx === 0}
-                    className="object-cover"
-                    unoptimized
+                    className="absolute inset-0 w-full h-full object-cover"
+                    loading={idx === 0 ? 'eager' : 'lazy'}
                   />
                 </div>
               ))}
@@ -206,75 +242,83 @@ export default function HeroSection({ product }: HeroSectionProps) {
               </div>
 
               {/* Left Arrow Button */}
-              <button
-                type="button"
-                onClick={goToPrev}
-                aria-label="Previous Slide"
-                className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-black/45 hover:bg-black/70 text-white flex items-center justify-center backdrop-blur-md border border-white/20 transition-all hover:scale-110 active:scale-95"
-              >
-                <ChevronLeft className="w-5 h-5 text-white" />
-              </button>
+              {slides.length > 1 && (
+                <button
+                  type="button"
+                  onClick={goToPrev}
+                  aria-label="Previous Slide"
+                  className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-black/45 hover:bg-black/70 text-white flex items-center justify-center backdrop-blur-md border border-white/20 transition-all hover:scale-110 active:scale-95"
+                >
+                  <ChevronLeft className="w-5 h-5 text-white" />
+                </button>
+              )}
 
               {/* Right Arrow Button */}
-              <button
-                type="button"
-                onClick={goToNext}
-                aria-label="Next Slide"
-                className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-black/45 hover:bg-black/70 text-white flex items-center justify-center backdrop-blur-md border border-white/20 transition-all hover:scale-110 active:scale-95"
-              >
-                <ChevronRight className="w-5 h-5 text-white" />
-              </button>
+              {slides.length > 1 && (
+                <button
+                  type="button"
+                  onClick={goToNext}
+                  aria-label="Next Slide"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-black/45 hover:bg-black/70 text-white flex items-center justify-center backdrop-blur-md border border-white/20 transition-all hover:scale-110 active:scale-95"
+                >
+                  <ChevronRight className="w-5 h-5 text-white" />
+                </button>
+              )}
             </div>
           </div>
 
           {/* Dots Indicator */}
-          <div className="flex items-center justify-center gap-1.5 mt-3 relative z-20">
-            {slides.map((_, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => setCurrentIndex(idx)}
-                aria-label={`Slide ${idx + 1}`}
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  idx === currentIndex
-                    ? 'w-6 bg-[#15803d]'
-                    : 'w-2 bg-slate-300 hover:bg-slate-400'
-                }`}
-              />
-            ))}
-          </div>
+          {slides.length > 1 && (
+            <div className="flex items-center justify-center gap-1.5 mt-3 relative z-20">
+              {slides.map((_, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setCurrentIndex(idx)}
+                  aria-label={`Slide ${idx + 1}`}
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    idx === activeIndex
+                      ? 'w-6 bg-[#15803d]'
+                      : 'w-2 bg-slate-300 hover:bg-slate-400'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
 
           {/* Quick Item Switcher Pills */}
-          <div className="flex items-center justify-center gap-1.5 mt-2.5 relative z-20 flex-wrap px-1">
-            {slides.map((slide, idx) => (
-              <button
-                key={slide.id}
-                type="button"
-                onClick={() => setCurrentIndex(idx)}
-                className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold transition-all duration-200 border ${
-                  idx === currentIndex
-                    ? 'bg-[#15803d] text-white border-[#15803d] shadow-sm scale-105'
-                    : 'bg-white/90 text-slate-700 border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50'
-                }`}
-              >
-                {slide.shortLabel}
-              </button>
-            ))}
-          </div>
+          {slides.length > 1 && (
+            <div className="flex items-center justify-center gap-1.5 mt-2.5 relative z-20 flex-wrap px-1">
+              {slides.map((slide, idx) => (
+                <button
+                  key={slide.id}
+                  type="button"
+                  onClick={() => setCurrentIndex(idx)}
+                  className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold transition-all duration-200 border ${
+                    idx === activeIndex
+                      ? 'bg-[#15803d] text-white border-[#15803d] shadow-sm scale-105'
+                      : 'bg-white/90 text-slate-700 border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50'
+                  }`}
+                >
+                  {slide.shortLabel}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* ============================================================== */}
-        {/* EYE-CATCHING PRICE BANNER CARD (EXACTLY MATCHING USER REFERENCE) */}
+        {/* EYE-CATCHING PRICE BANNER CARD */}
         {/* ============================================================== */}
         <div className="mt-4 mb-5 text-center">
           {/* Main Combo Headline */}
           <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-100 text-[#14532d] text-xs sm:text-sm font-black border border-emerald-300/80 shadow-xs mb-2">
             <Gift className="w-3.5 h-3.5 text-amber-600 animate-bounce" />
-            <span>ধামাকা ৩-ইন-১ অফার প্যাকেজ</span>
+            <span>{product?.headlinePre || 'ধামাকা ৩-ইন-১ অফার প্যাকেজ'}</span>
           </div>
 
           <h1 className="m-0 text-[#14532d] text-2xl sm:text-3xl md:text-4xl font-black leading-tight tracking-tight">
-            স্পেশাল ইলিশের আচার কম্বো
+            {product?.productName || 'স্পেশাল ইলিশের আচার কম্বো'}
           </h1>
 
           {/* Deep Green Price Box with Red Cross & Yellow Double-Underline */}
@@ -283,18 +327,15 @@ export default function HeroSection({ product }: HeroSectionProps) {
             <div className="absolute -top-10 -right-10 w-28 h-28 bg-emerald-400/20 rounded-full blur-xl pointer-events-none" />
             <div className="absolute -bottom-10 -left-10 w-28 h-28 bg-amber-400/15 rounded-full blur-xl pointer-events-none" />
 
-            {/* Line 1: Previous Price with RED CROSS (Clear & Legible 1200) */}
+            {/* Line 1: Previous Price with RED CROSS */}
             <div className="relative z-10 flex items-center justify-center gap-2 text-base sm:text-lg md:text-xl font-bold text-white">
               <span className="tracking-wide text-emerald-100 font-extrabold">পূর্বের মূল্য</span>
               
-              {/* Only 1200 has the clean red cross mark */}
               <span className="relative inline-flex items-center justify-center px-2.5 py-0.5 mx-1 font-black">
-                {/* 1200 is large, spacious, and 100% clearly readable */}
                 <span className="relative z-10 text-2xl sm:text-3xl font-black tracking-widest text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]">
                   {regularPrice}
                 </span>
 
-                {/* Elegant, thin red cross that clearly marks without covering the numbers */}
                 <svg
                   className="absolute -inset-x-2 -inset-y-2 w-[calc(100%+16px)] h-[calc(100%+16px)] pointer-events-none z-20"
                   viewBox="0 0 100 50"
@@ -324,14 +365,13 @@ export default function HeroSection({ product }: HeroSectionProps) {
               <span className="tracking-wide text-emerald-100 font-extrabold">টাকা</span>
             </div>
 
-            {/* Line 2: Offer Price with YELLOW DOUBLE UNDERLINE (Maximum Contrast) */}
+            {/* Line 2: Offer Price with YELLOW DOUBLE UNDERLINE */}
             <div className="relative z-10 mt-1 sm:mt-2.5 flex items-center justify-center flex-wrap gap-x-2.5 gap-y-1">
               <span className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
                 অফার মূল্য
               </span>
               <span className="relative inline-block text-3xl sm:text-4xl md:text-5xl font-black text-[#facc15] px-1 tracking-tight">
                 <span>{offerPrice} টাকা</span>
-                {/* Authentic Yellow Double Highlight Curve Underline */}
                 <svg
                   className="absolute -bottom-2.5 sm:-bottom-3.5 left-0 w-full h-3.5 sm:h-4 text-amber-300 drop-shadow-md pointer-events-none"
                   viewBox="0 0 120 14"
@@ -357,20 +397,20 @@ export default function HeroSection({ product }: HeroSectionProps) {
             {/* Savings Badge */}
             <div className="relative z-10 mt-4 flex items-center justify-center">
               <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-rose-600 text-white text-xs sm:text-sm font-black shadow-md border border-rose-400/50 animate-pulse">
-                <span>🔥 সরাসরি ৪০১ টাকা সাশ্রয়!</span>
+                <span>{savings > 0 ? `🔥 সরাসরি ${savings} টাকা সাশ্রয়!` : '🔥 স্পেশাল সীমিত সময়ের অফার!'}</span>
               </span>
             </div>
           </div>
 
           {/* ============================================================== */}
-          {/* FREE PRODUCTS & FREE DELIVERY SHOWCASE (MAIN PROMINENT HIGHLIGHT) */}
+          {/* FREE PRODUCTS & FREE DELIVERY SHOWCASE */}
           {/* ============================================================== */}
           <div className="mt-4 mx-auto rounded-2xl sm:rounded-3xl bg-gradient-to-br from-emerald-50 via-white to-amber-50/50 border-2 border-emerald-400 p-3.5 sm:p-4 text-left shadow-lg">
             <div className="flex items-center justify-between mb-3 border-b border-emerald-200/90 pb-2">
               <div className="flex items-center gap-1.5">
                 <span className="text-base sm:text-lg">🎁</span>
                 <span className="text-xs sm:text-sm font-black text-[#14532d] uppercase tracking-wide">
-                  এই প্যাকেজে যা যা সম্পূর্ণ ফ্রি পাচ্ছেন:
+                  {product?.headlineHighlight || 'এই প্যাকেজে যা যা সম্পূর্ণ ফ্রি পাচ্ছেন:'}
                 </span>
               </div>
               <span className="bg-[#15803d] text-white text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded-full shadow-xs">
@@ -428,7 +468,7 @@ export default function HeroSection({ product }: HeroSectionProps) {
                   </div>
                   <div className="min-w-0">
                     <span className="text-xs sm:text-sm font-black text-slate-900 block leading-tight">
-                      সারা বাংলাদেশে ফ্রি হোম ডেলিভারি
+                      {product?.freeDeliveryHeadline || 'সারা বাংলাদেশে ফ্রি হোম ডেলিভারি'}
                     </span>
                     <span className="text-[11px] text-slate-500 font-semibold block truncate">
                       অগ্রিম ১ টাকাও দিতে হবে না • চেক করে পেমেন্ট
@@ -445,7 +485,7 @@ export default function HeroSection({ product }: HeroSectionProps) {
             <div className="mt-3 pt-2.5 border-t border-emerald-200/90 flex items-center justify-between flex-wrap gap-2 text-xs font-black text-[#14532d]">
               <span>মোট প্যাকেজের ওজন:</span>
               <span className="text-[#14532d] bg-emerald-100 px-3 py-1 rounded-full border border-emerald-300 shadow-2xs">
-                মোট ৪০০ গ্রাম (২০০ গ্রাম কিনলেই ২০০ গ্রাম ফ্রি!)
+                {product?.headlinePost || 'মোট ৪০০ গ্রাম (২০০ গ্রাম কিনলেই ২০০ গ্রাম ফ্রি!)'}
               </span>
             </div>
           </div>

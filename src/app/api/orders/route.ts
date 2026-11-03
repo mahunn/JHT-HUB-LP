@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createOrderAsync, getOrdersAsync, getSettingsAsync } from '@/lib/db';
+import { sendMetaCapiEvent } from '@/lib/capi';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,6 +38,28 @@ export async function POST(request: Request) {
     });
 
     const settings = await getSettingsAsync();
+
+    // Server-Side Meta Conversion API (CAPI) Dispatch
+    if (settings.fbCapiEnabled && settings.metaPixelId && settings.fbCapiToken) {
+      try {
+        await sendMetaCapiEvent({
+          eventName: 'Purchase',
+          eventId: order.id, // Deduplicated with browser pixel
+          eventSourceUrl: request.headers.get('referer') || 'https://jhtfood.vercel.app',
+          customerName: order.customerName,
+          phone: order.phone,
+          value: order.total,
+          currency: 'BDT',
+          contentName: order.selectedPackage?.banglaName || order.selectedPackage?.name || 'স্পেশাল ৩-ইন-১ আচার কম্বো',
+          numItems: order.quantity || 1,
+          orderId: order.id,
+          headers: request.headers,
+          settings,
+        });
+      } catch (capiErr) {
+        console.error('[Order CAPI Dispatch Error]:', capiErr);
+      }
+    }
 
     return NextResponse.json({ success: true, order, settings }, { status: 201 });
   } catch (error: any) {

@@ -153,6 +153,9 @@ const DEFAULT_DB: DatabaseSchema = {
     facebookPageUrl: '',
     metaPixelId: '',
     tiktokPixelId: '',
+    fbCapiEnabled: true,
+    fbCapiToken: '',
+    fbTestEventCode: '',
     announcementText: '🎉 ইলিশের আচারে গরু ও বালাচাও ফ্রি!',
     announcementActive: true
   },

@@ -12,6 +12,7 @@ import {
   Loader2,
   Sparkles,
   ExternalLink,
+  HelpCircle,
 } from 'lucide-react';
 import { StoreSettings } from '@/types/landing';
 
@@ -21,6 +22,7 @@ export default function AdminSettingsPage() {
   const [saving, setSaving] = useState<boolean>(false);
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
   const [saveError, setSaveError] = useState<string>('');
+  const [showPixelGuide, setShowPixelGuide] = useState<boolean>(false);
 
   useEffect(() => {
     fetchSettings();
@@ -58,6 +60,9 @@ export default function AdminSettingsPage() {
         facebookPageUrl: (settings.facebookPageUrl || '').trim(),
         metaPixelId: (settings.metaPixelId || '').trim(),
         tiktokPixelId: (settings.tiktokPixelId || '').trim(),
+        fbCapiEnabled: settings.fbCapiEnabled !== false,
+        fbCapiToken: (settings.fbCapiToken || '').trim(),
+        fbTestEventCode: (settings.fbTestEventCode || '').trim(),
         announcementText: (settings.announcementText || '').trim(),
         announcementActive: !!settings.announcementActive,
       };
@@ -102,7 +107,7 @@ export default function AdminSettingsPage() {
             সেটিংস ও পিক্সেল ইন্টিগ্রেশন
           </h1>
           <p className="text-sm text-slate-500 font-medium mt-1">
-            হটলাইন, সোশ্যাল লিংক, অ্যানাউন্সমেন্ট ও ট্র্যাকিং পিক্সেল কনফিগারেশন
+            হটলাইন, সোশ্যাল লিংক, অ্যানাউন্সমেন্ট ও Facebook Conversion API (CAPI) ট্র্যাকিং
           </p>
         </div>
 
@@ -234,7 +239,7 @@ export default function AdminSettingsPage() {
                 onChange={(e) => setSettings({ ...settings, announcementActive: e.target.checked })}
                 className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer"
               />
-              <span>অ্যানাউন্সমেন্ট বার চালু রাখুন (সবার উপরে লাল/সবুজ অফার স্ট্রিপ দেখাবে)</span>
+              <span>অ্যানাউন্সমেন্ট বার চালু রাখুন (সবার উপরে অফার স্ট্রিপ দেখাবে)</span>
             </label>
 
             <div>
@@ -268,29 +273,39 @@ export default function AdminSettingsPage() {
           </div>
         </div>
 
-        {/* 3. Marketing Tracking Pixels */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-          <div className="pb-3 border-b border-slate-100 flex items-center justify-between">
+        {/* 3. Marketing Tracking Pixels & Meta Conversions API (CAPI) */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5">
+          <div className="pb-3 border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
             <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
               <Code className="w-5 h-5 text-emerald-600" />
-              <span>ফেসবুক ও টিকটক পিক্সেল ট্র্যাকিং (Ad Tracking)</span>
+              <span>ফেসবুক ও টিকটক পিক্সেল ট্র্যাকিং (Ad Tracking & CAPI)</span>
             </h2>
-            <span className="text-xs bg-emerald-100 text-emerald-800 font-bold px-2.5 py-0.5 rounded-full">
-              Full E-Commerce Ready
+            <span className="text-xs bg-emerald-100 text-emerald-800 font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-emerald-600" />
+              Server CAPI Ready
             </span>
           </div>
 
           <p className="text-xs text-slate-600 leading-relaxed">
-            আপনার পিক্সেল আইডি বসিয়ে নিচের <span className="font-bold text-emerald-700">"সেটিংস সেভ করুন"</span> বাটনে চাপুন। 
-            পেইজ লোড হওয়া মাত্রই অফিসিয়াল ট্র্যাকিং কোড স্বয়ংক্রিয়ভাবে একটিভ হবে।
+            আপনার পিক্সেল আইডি ও কনভার্সন এপিআই (CAPI) টোকেন বসিয়ে নিচের <span className="font-bold text-emerald-700">&quot;সেটিংস সেভ করুন&quot;</span> বাটনে চাপুন। পেজ লোড হওয়া মাত্রই ব্রাউজার ট্র্যাকিং এবং অর্ডার হওয়ার সাথে সাথে সার্ভার ট্র্যাকিং সক্রিয় হবে।
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
-                <span>Facebook Meta Pixel ID</span>
-                <span className="text-[10px] text-slate-400 font-normal">Dataset ID</span>
-              </label>
+            {/* Meta Pixel ID */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-slate-700">
+                  Facebook Meta Pixel ID
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowPixelGuide(!showPixelGuide)}
+                  className="text-[11px] font-bold text-emerald-600 hover:text-emerald-700 underline flex items-center gap-1 cursor-pointer"
+                >
+                  <HelpCircle className="w-3 h-3" />
+                  How to get it?
+                </button>
+              </div>
               <input
                 type="text"
                 placeholder="যেমন: 1234567890123456"
@@ -298,16 +313,19 @@ export default function AdminSettingsPage() {
                 onChange={(e) => setSettings({ ...settings, metaPixelId: e.target.value })}
                 className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
               />
-              <p className="text-[11px] text-slate-400 mt-1">
+              <p className="text-[11px] text-slate-400">
                 Meta Events Manager থেকে ১৬-১৮ ডিজিটের পিক্সেল বা ডেটাসেট আইডি দিন।
               </p>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
-                <span>TikTok Pixel ID</span>
+            {/* TikTok Pixel ID */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-slate-700">
+                  TikTok Pixel ID
+                </label>
                 <span className="text-[10px] text-slate-400 font-normal">TikTok Ads</span>
-              </label>
+              </div>
               <input
                 type="text"
                 placeholder="যেমন: CXXXXXXXXXXXXXX"
@@ -315,10 +333,103 @@ export default function AdminSettingsPage() {
                 onChange={(e) => setSettings({ ...settings, tiktokPixelId: e.target.value })}
                 className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
               />
-              <p className="text-[11px] text-slate-400 mt-1">
+              <p className="text-[11px] text-slate-400">
                 TikTok Ads Manager এর Assets &gt; Events থেকে আপনার Pixel ID টি দিন।
               </p>
             </div>
+          </div>
+
+          {/* Guide Expandable Box */}
+          {showPixelGuide && (
+            <div className="p-4 rounded-xl bg-emerald-50/90 border border-emerald-200 text-xs text-slate-700 space-y-2 animate-fadeIn">
+              <span className="font-extrabold text-emerald-900 block text-sm">
+                📋 যেভাবে Pixel ID ও Conversion API Token বের করবেন:
+              </span>
+              <ol className="list-decimal list-inside space-y-1.5 text-slate-700">
+                <li>
+                  <a href="https://business.facebook.com/events_manager2" target="_blank" rel="noreferrer" className="text-emerald-700 underline font-bold inline-flex items-center gap-1">
+                    Meta Events Manager <ExternalLink className="w-3 h-3 inline" />
+                  </a> এ যান।
+                </li>
+                <li>আপনার কাঙ্ক্ষিত <strong>Dataset / Pixel</strong> সিলেক্ট করুন। ডানপাশে ১৬-১৮ ডিজিটের <strong>Dataset ID</strong> পাবেন, তা কপি করে উপরে দিন।</li>
+                <li>উপরের <strong>Settings</strong> ট্যাবে যান, স্ক্রল করে <strong>Set up direct integration &gt; Generate access token</strong> লিংকে চাপুন।</li>
+                <li>প্রাপ্ত লম্বা টোকেনটি কপি করে নিচের <strong>Conversion API Token</strong> বক্সে বসিয়ে সেভ করুন।</li>
+              </ol>
+            </div>
+          )}
+
+          {/* CAPI Token-Based Conversion API Switch Card */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-700">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="text-sm font-extrabold text-slate-900 block leading-tight">
+                    Token-based Conversion API
+                  </span>
+                  <span className="text-[11px] text-slate-500">
+                    সার্ভার-সাইড সরাসরি ডেটা ট্র্যাকিং (iOS 14+ ও অ্যাডব্লকার বাইপাস)
+                  </span>
+                </div>
+              </div>
+
+              {/* Toggle Switch */}
+              <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                <input
+                  type="checkbox"
+                  checked={settings.fbCapiEnabled !== false}
+                  onChange={(e) => setSettings({ ...settings, fbCapiEnabled: e.target.checked })}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+              </label>
+            </div>
+
+            {/* If CAPI is enabled, show Token and Test Code inputs */}
+            {settings.fbCapiEnabled !== false && (
+              <div className="space-y-4 pt-3 border-t border-slate-200 animate-fadeIn">
+                {/* Conversion API Token */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700">
+                    Conversion API Token:
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder="Api token (যেমন: EAAB...)"
+                    value={settings.fbCapiToken || ''}
+                    onChange={(e) => setSettings({ ...settings, fbCapiToken: e.target.value })}
+                    className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-mono text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none transition-all resize-none shadow-xs"
+                  />
+                  <div className="p-3 rounded-xl bg-amber-50/90 border border-amber-200/90 text-[11px] text-amber-900 leading-relaxed">
+                    <p className="font-semibold mb-1">
+                      Add the Conversion API token for this pixel.
+                    </p>
+                    <p className="text-amber-800">
+                      Send events directly from your web server to Facebook through the Conversion API. This helps capture more events and improves Event Match Quality (EMQ). An access token is required to use the server-side API.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Test Event Code */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700">
+                    Test Event Code:
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="যেমন: TEST89595"
+                    value={settings.fbTestEventCode || ''}
+                    onChange={(e) => setSettings({ ...settings, fbTestEventCode: e.target.value })}
+                    className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-mono font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none transition-all shadow-xs"
+                  />
+                  <p className="text-[11px] text-slate-500">
+                    Use this if you need to test the server-side event in Meta Events Manager &gt; Test Events. Remove it after testing is complete.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Supported Events Showcase */}
@@ -354,9 +465,9 @@ export default function AdminSettingsPage() {
               <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col gap-0.5">
                 <span className="font-mono font-bold text-emerald-700 flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  Purchase
+                  Purchase (CAPI)
                 </span>
-                <span className="text-[10px] text-slate-500">অর্ডার কনফার্ম হলে (Deduplicated)</span>
+                <span className="text-[10px] text-slate-500">ব্রাউজার + সার্ভার (Deduplicated ⚡)</span>
               </div>
             </div>
           </div>

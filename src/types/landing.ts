@@ -76,6 +76,9 @@ export interface StoreSettings {
   facebookPageUrl: string;
   metaPixelId: string;
   tiktokPixelId: string;
+  fbCapiEnabled?: boolean;
+  fbCapiToken?: string;
+  fbTestEventCode?: string;
   adminUsername?: string;
   adminPassword?: string;
   adminPin?: string;
