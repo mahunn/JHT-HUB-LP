@@ -9,7 +9,7 @@ const TMP_DB_FILE = path.join('/tmp', 'jht_db.json');
 // In-memory cache for fast access
 let memoryDb: DatabaseSchema | null = null;
 let lastCloudFetchTime: number = 0;
-const CLOUD_CACHE_TTL_MS = 25000;
+const CLOUD_CACHE_TTL_MS = 60000;
 
 // Cloud Sync Configuration (Supabase & Vercel KV / Upstash Redis)
 function getSupabaseConfig() {
@@ -224,7 +224,7 @@ export async function getDbAsync(): Promise<DatabaseSchema> {
           Authorization: `Bearer ${supabase.key}`,
           'Content-Type': 'application/json',
         },
-        cache: 'no-store',
+        next: { revalidate: 30, tags: ['jhthub_db'] },
       });
       if (res.ok) {
         const rows = await res.json();
@@ -284,6 +284,11 @@ export function saveDb(data: DatabaseSchema): void {
     leads: [...(data.leads || [])]
   };
   lastCloudFetchTime = Date.now();
+  try {
+    const { revalidateTag } = require('next/cache');
+    revalidateTag('jhthub_db');
+  } catch (e) {}
+  
 
   const payload = JSON.stringify(memoryDb, null, 2);
 
