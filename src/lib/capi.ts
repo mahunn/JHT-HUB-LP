@@ -43,20 +43,35 @@ export function extractClientIp(headers: Headers): string | undefined {
   );
 }
 
-export function extractCookies(headers: Headers): { fbp?: string; fbc?: string } {
+export function extractCookies(headers: Headers): {
+  fbp?: string;
+  fbc?: string;
+  ttp?: string;
+  ttclid?: string;
+} {
   const cookieHeader = headers.get('cookie') || '';
   let fbp: string | undefined;
   let fbc: string | undefined;
+  let ttp: string | undefined;
+  let ttclid: string | undefined;
 
   const matches = cookieHeader.split(';');
   for (const item of matches) {
-    const [name, val] = item.trim().split('=');
+    const [rawName, rawVal] = item.trim().split('=');
+    const name = rawName?.trim();
+    const val = rawVal?.trim();
     if (name === '_fbp') fbp = val;
     if (name === '_fbc') fbc = val;
+    if (name === '_ttp') ttp = val;
+    if (name === 'ttclid') ttclid = val;
   }
 
-  return { fbp, fbc };
+  return { fbp, fbc, ttp, ttclid };
 }
+
+// ============================================================================
+// META (FACEBOOK) CONVERSIONS API (CAPI)
+// ============================================================================
 
 export interface MetaCapiEventParams {
   eventName: 'Purchase' | 'InitiateCheckout' | 'ViewContent' | 'PageView' | 'Lead';
@@ -84,7 +99,7 @@ export async function sendMetaCapiEvent(params: MetaCapiEventParams): Promise<{
   const enabled = settings.fbCapiEnabled !== false;
 
   if (!enabled || !pixelId || !capiToken) {
-    return { success: false, error: 'Conversion API is not configured or disabled' };
+    return { success: false, error: 'Meta Conversion API is not configured or disabled' };
   }
 
   try {
@@ -132,7 +147,7 @@ export async function sendMetaCapiEvent(params: MetaCapiEventParams): Promise<{
       data: [eventPayload],
     };
 
-    // If Test Event Code is provided, include it in the root payload for Meta Events Manager testing
+    // Include test event code if provided in admin
     const testCode = (settings.fbTestEventCode || '').trim();
     if (testCode) {
       requestBody.test_event_code = testCode;
@@ -158,6 +173,108 @@ export async function sendMetaCapiEvent(params: MetaCapiEventParams): Promise<{
     return { success: true, data: result };
   } catch (err: any) {
     console.error('[Meta CAPI Error]:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+// ============================================================================
+// TIKTOK EVENTS API (SERVER-SIDE TRACKING)
+// ============================================================================
+
+export interface TikTokCapiEventParams {
+  eventName: 'CompletePayment' | 'PlaceAnOrder' | 'InitiateCheckout' | 'ViewContent' | 'Pageview';
+  eventId: string;
+  eventSourceUrl?: string;
+  phone?: string;
+  value?: number;
+  currency?: string;
+  contentName?: string;
+  numItems?: number;
+  orderId?: string;
+  headers?: Headers;
+  settings: StoreSettings;
+}
+
+export async function sendTikTokCapiEvent(params: TikTokCapiEventParams): Promise<{
+  success: boolean;
+  data?: any;
+  error?: string;
+}> {
+  const { settings } = params;
+  const pixelId = (settings.tiktokPixelId || '').trim();
+  const capiToken = (settings.tiktokCapiToken || '').trim();
+  const enabled = settings.tiktokCapiEnabled !== false;
+
+  if (!enabled || !pixelId || !capiToken) {
+    return { success: false, error: 'TikTok Events API is not configured or disabled' };
+  }
+
+  try {
+    const headers = params.headers;
+    const clientIp = headers ? extractClientIp(headers) : undefined;
+    const userAgent = headers ? headers.get('user-agent') || undefined : undefined;
+    const cookies = headers ? extractCookies(headers) : {};
+
+    const hashedPhone = normalizePhoneForCapi(params.phone);
+
+    const userObj: Record<string, any> = {};
+    if (hashedPhone) userObj.phone = hashedPhone;
+    if (clientIp) userObj.ip = clientIp;
+    if (userAgent) userObj.user_agent = userAgent;
+    if (cookies.ttp) userObj.ttp = cookies.ttp;
+    if (cookies.ttclid) userObj.ttclid = cookies.ttclid;
+
+    const eventPayload: Record<string, any> = {
+      event: params.eventName,
+      event_time: Math.floor(Date.now() / 1000),
+      event_id: params.eventId,
+      user: userObj,
+      properties: {
+        currency: params.currency || 'BDT',
+        value: params.value ?? 799,
+        contents: [
+          {
+            price: params.value ?? 799,
+            quantity: params.numItems || 1,
+            content_name: params.contentName || 'স্পেশাল ইলিশের আচার কম্বো ধামাকা অফার',
+            content_type: 'product',
+          },
+        ],
+      },
+    };
+
+    const requestBody: Record<string, any> = {
+      event_source: 'web',
+      event_source_id: pixelId,
+      data: [eventPayload],
+    };
+
+    const testCode = (settings.tiktokTestEventCode || '').trim();
+    if (testCode) {
+      requestBody.test_event_code = testCode;
+    }
+
+    const endpoint = 'https://business-api.tiktok.com/open_api/v1.3/event/track/';
+
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Access-Token': capiToken,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    const result = await res.json();
+
+    if (!res.ok || result?.code !== 0) {
+      console.warn('[TikTok CAPI Warning]:', result);
+      return { success: false, error: result?.message || 'TikTok Events API error', data: result };
+    }
+
+    return { success: true, data: result };
+  } catch (err: any) {
+    console.error('[TikTok CAPI Error]:', err);
     return { success: false, error: err.message };
   }
 }

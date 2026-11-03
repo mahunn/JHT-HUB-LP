@@ -1,7 +1,7 @@
 /**
  * Safe, robust Facebook Meta Pixel & TikTok Pixel event dispatcher.
  * Handles checks, prevents errors if ad blockers are active,
- * integrates with Meta Conversions API (CAPI),
+ * integrates with Meta Conversions API (CAPI) & TikTok Events API,
  * and deduplicates purchase events with matching eventID.
  */
 
@@ -85,12 +85,16 @@ export function trackViewContent(options?: TrackProductOptions): void {
       );
     }
     if (typeof win.ttq?.track === 'function') {
-      win.ttq.track('ViewContent', {
-        content_name: name,
-        content_type: 'product',
-        value: price,
-        currency,
-      });
+      win.ttq.track(
+        'ViewContent',
+        {
+          content_name: name,
+          content_type: 'product',
+          value: price,
+          currency,
+        },
+        { event_id: eid }
+      );
     }
     dispatchCapi('ViewContent', eid, { ...options, name, price, currency });
   } catch (err) {
@@ -129,13 +133,17 @@ export function trackInitiateCheckout(options?: TrackProductOptions): void {
       );
     }
     if (typeof win.ttq?.track === 'function') {
-      win.ttq.track('InitiateCheckout', {
-        content_name: name,
-        content_type: 'product',
-        value: price,
-        currency,
-        quantity,
-      });
+      win.ttq.track(
+        'InitiateCheckout',
+        {
+          content_name: name,
+          content_type: 'product',
+          value: price,
+          currency,
+          quantity,
+        },
+        { event_id: eid }
+      );
     }
     dispatchCapi('InitiateCheckout', eid, { ...options, name, price, currency, quantity });
   } catch (err) {
@@ -181,22 +189,30 @@ export function trackPurchase(options: TrackProductOptions): void {
       );
     }
     if (typeof win.ttq?.track === 'function') {
-      win.ttq.track('PlaceAnOrder', {
-        content_name: name,
-        content_type: 'product',
-        value: price,
-        currency,
-        quantity,
-        order_id: orderId,
-      });
-      win.ttq.track('CompletePayment', {
-        content_name: name,
-        content_type: 'product',
-        value: price,
-        currency,
-        quantity,
-        order_id: orderId,
-      });
+      win.ttq.track(
+        'PlaceAnOrder',
+        {
+          content_name: name,
+          content_type: 'product',
+          value: price,
+          currency,
+          quantity,
+          order_id: orderId,
+        },
+        { event_id: eid }
+      );
+      win.ttq.track(
+        'CompletePayment',
+        {
+          content_name: name,
+          content_type: 'product',
+          value: price,
+          currency,
+          quantity,
+          order_id: orderId,
+        },
+        { event_id: eid }
+      );
     }
   } catch (err) {
     console.warn('[Pixel] Purchase error:', err);

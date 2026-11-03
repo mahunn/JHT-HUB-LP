@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createOrderAsync, getOrdersAsync, getSettingsAsync } from '@/lib/db';
-import { sendMetaCapiEvent } from '@/lib/capi';
+import { sendMetaCapiEvent, sendTikTokCapiEvent } from '@/lib/capi';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
 
     const settings = await getSettingsAsync();
 
-    // Server-Side Meta Conversion API (CAPI) Dispatch
+    // 1. Server-Side Meta Conversion API (CAPI) Dispatch
     if (settings.fbCapiEnabled && settings.metaPixelId && settings.fbCapiToken) {
       try {
         await sendMetaCapiEvent({
@@ -57,7 +57,28 @@ export async function POST(request: Request) {
           settings,
         });
       } catch (capiErr) {
-        console.error('[Order CAPI Dispatch Error]:', capiErr);
+        console.error('[Order Meta CAPI Dispatch Error]:', capiErr);
+      }
+    }
+
+    // 2. Server-Side TikTok Events API Dispatch
+    if (settings.tiktokCapiEnabled && settings.tiktokPixelId && settings.tiktokCapiToken) {
+      try {
+        await sendTikTokCapiEvent({
+          eventName: 'CompletePayment',
+          eventId: order.id, // Deduplicated with browser TikTok pixel
+          eventSourceUrl: request.headers.get('referer') || 'https://jhtfood.vercel.app',
+          phone: order.phone,
+          value: order.total,
+          currency: 'BDT',
+          contentName: order.selectedPackage?.banglaName || order.selectedPackage?.name || 'স্পেশাল ৩-ইন-১ আচার কম্বো',
+          numItems: order.quantity || 1,
+          orderId: order.id,
+          headers: request.headers,
+          settings,
+        });
+      } catch (ttErr) {
+        console.error('[Order TikTok Events API Dispatch Error]:', ttErr);
       }
     }
 

@@ -30,7 +30,10 @@ export default function FloatingActions({ settings }: FloatingActionsProps) {
     : '';
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-2.5">
+    <aside
+      aria-label="যোগাযোগ বাটন"
+      className="fixed bottom-20 sm:bottom-22 right-3.5 sm:right-5 z-40 flex flex-col items-end gap-2.5 transition-all duration-300"
+    >
       {/* Hotline Call Button (if configured) */}
       {cleanHotline && (
         <a
@@ -79,6 +82,6 @@ export default function FloatingActions({ settings }: FloatingActionsProps) {
           WhatsApp
         </span>
       </a>
-    </div>
+    </aside>
   );
 }

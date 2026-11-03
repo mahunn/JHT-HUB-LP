@@ -11,6 +11,7 @@ import StorageGuideSection from '@/components/StorageGuideSection';
 import CustomerReviews from '@/components/CustomerReviews';
 import CheckoutOrderForm from '@/components/CheckoutOrderForm';
 import FloatingActions from '@/components/FloatingActions';
+import StickyOrderBar from '@/components/StickyOrderBar';
 import Footer from '@/components/Footer';
 
 interface LandingPageClientProps {
@@ -98,7 +99,10 @@ export default function LandingPageClient({
       {/* 8. Floating Actions (WhatsApp & Call) */}
       <FloatingActions settings={settings} />
 
-      {/* 9. Footer */}
+      {/* 9. Sticky Bottom Order Bar (Hides at checkout) */}
+      <StickyOrderBar product={product} />
+
+      {/* 10. Footer */}
       <Footer settings={settings} />
     </main>
   );

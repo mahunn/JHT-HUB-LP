@@ -22,7 +22,8 @@ export default function AdminSettingsPage() {
   const [saving, setSaving] = useState<boolean>(false);
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
   const [saveError, setSaveError] = useState<string>('');
-  const [showPixelGuide, setShowPixelGuide] = useState<boolean>(false);
+  const [showMetaGuide, setShowMetaGuide] = useState<boolean>(false);
+  const [showTikTokGuide, setShowTikTokGuide] = useState<boolean>(false);
 
   useEffect(() => {
     fetchSettings();
@@ -59,10 +60,13 @@ export default function AdminSettingsPage() {
         messengerUrl: (settings.messengerUrl || '').trim(),
         facebookPageUrl: (settings.facebookPageUrl || '').trim(),
         metaPixelId: (settings.metaPixelId || '').trim(),
-        tiktokPixelId: (settings.tiktokPixelId || '').trim(),
         fbCapiEnabled: settings.fbCapiEnabled !== false,
         fbCapiToken: (settings.fbCapiToken || '').trim(),
         fbTestEventCode: (settings.fbTestEventCode || '').trim(),
+        tiktokPixelId: (settings.tiktokPixelId || '').trim(),
+        tiktokCapiEnabled: settings.tiktokCapiEnabled !== false,
+        tiktokCapiToken: (settings.tiktokCapiToken || '').trim(),
+        tiktokTestEventCode: (settings.tiktokTestEventCode || '').trim(),
         announcementText: (settings.announcementText || '').trim(),
         announcementActive: !!settings.announcementActive,
       };
@@ -104,10 +108,10 @@ export default function AdminSettingsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm">
         <div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-            সেটিংস ও পিক্সেল ইন্টিগ্রেশন
+            সেটিংস ও অ্যাড ট্র্যাকিং ইন্টিগ্রেশন
           </h1>
           <p className="text-sm text-slate-500 font-medium mt-1">
-            হটলাইন, সোশ্যাল লিংক, অ্যানাউন্সমেন্ট ও Facebook Conversion API (CAPI) ট্র্যাকিং
+            হটলাইন, সোশ্যাল লিংক, অ্যানাউন্সমেন্ট, Facebook CAPI ও TikTok Events API ট্র্যাকিং
           </p>
         </div>
 
@@ -273,81 +277,61 @@ export default function AdminSettingsPage() {
           </div>
         </div>
 
-        {/* 3. Marketing Tracking Pixels & Meta Conversions API (CAPI) */}
+        {/* ============================================================== */}
+        {/* 3. FACEBOOK META PIXEL & CONVERSION API (CAPI) */}
+        {/* ============================================================== */}
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5">
           <div className="pb-3 border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
             <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <Code className="w-5 h-5 text-emerald-600" />
-              <span>ফেসবুক ও টিকটক পিক্সেল ট্র্যাকিং (Ad Tracking & CAPI)</span>
+              <Code className="w-5 h-5 text-blue-600" />
+              <span>১. ফেসবুক মেটা পিক্সেল ও কনভার্সন এপিআই (Meta Pixel & CAPI)</span>
             </h2>
-            <span className="text-xs bg-emerald-100 text-emerald-800 font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-emerald-600" />
-              Server CAPI Ready
+            <span className="text-xs bg-blue-100 text-blue-800 font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-blue-600" />
+              Meta CAPI Ready
             </span>
           </div>
 
           <p className="text-xs text-slate-600 leading-relaxed">
-            আপনার পিক্সেল আইডি ও কনভার্সন এপিআই (CAPI) টোকেন বসিয়ে নিচের <span className="font-bold text-emerald-700">&quot;সেটিংস সেভ করুন&quot;</span> বাটনে চাপুন। পেজ লোড হওয়া মাত্রই ব্রাউজার ট্র্যাকিং এবং অর্ডার হওয়ার সাথে সাথে সার্ভার ট্র্যাকিং সক্রিয় হবে।
+            ফেসবুক মেটা পিক্সেল আইডি ও সার্ভার-সাইড Conversions API (CAPI) টোকেন দিন। এটি ব্রাউজার অ্যাডব্লকার ও iOS 14+ বাইপাস করে মেটাতে শতভাগ নির্ভুল ডেটা ট্র্যাক করতে সাহায্য করবে।
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
-            {/* Meta Pixel ID */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-slate-700">
-                  Facebook Meta Pixel ID
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setShowPixelGuide(!showPixelGuide)}
-                  className="text-[11px] font-bold text-emerald-600 hover:text-emerald-700 underline flex items-center gap-1 cursor-pointer"
-                >
-                  <HelpCircle className="w-3 h-3" />
-                  How to get it?
-                </button>
-              </div>
-              <input
-                type="text"
-                placeholder="যেমন: 1234567890123456"
-                value={settings.metaPixelId || ''}
-                onChange={(e) => setSettings({ ...settings, metaPixelId: e.target.value })}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
-              />
-              <p className="text-[11px] text-slate-400">
-                Meta Events Manager থেকে ১৬-১৮ ডিজিটের পিক্সেল বা ডেটাসেট আইডি দিন।
-              </p>
+          {/* Meta Pixel ID */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-slate-700">
+                Facebook Meta Pixel ID (Dataset ID)
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowMetaGuide(!showMetaGuide)}
+                className="text-[11px] font-bold text-blue-600 hover:text-blue-700 underline flex items-center gap-1 cursor-pointer"
+              >
+                <HelpCircle className="w-3 h-3" />
+                How to get it?
+              </button>
             </div>
-
-            {/* TikTok Pixel ID */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-slate-700">
-                  TikTok Pixel ID
-                </label>
-                <span className="text-[10px] text-slate-400 font-normal">TikTok Ads</span>
-              </div>
-              <input
-                type="text"
-                placeholder="যেমন: CXXXXXXXXXXXXXX"
-                value={settings.tiktokPixelId || ''}
-                onChange={(e) => setSettings({ ...settings, tiktokPixelId: e.target.value })}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
-              />
-              <p className="text-[11px] text-slate-400">
-                TikTok Ads Manager এর Assets &gt; Events থেকে আপনার Pixel ID টি দিন।
-              </p>
-            </div>
+            <input
+              type="text"
+              placeholder="যেমন: 1234567890123456"
+              value={settings.metaPixelId || ''}
+              onChange={(e) => setSettings({ ...settings, metaPixelId: e.target.value })}
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+            />
+            <p className="text-[11px] text-slate-400">
+              Meta Events Manager থেকে ১৬-১৮ ডিজিটের Dataset বা Pixel ID দিন।
+            </p>
           </div>
 
-          {/* Guide Expandable Box */}
-          {showPixelGuide && (
-            <div className="p-4 rounded-xl bg-emerald-50/90 border border-emerald-200 text-xs text-slate-700 space-y-2 animate-fadeIn">
-              <span className="font-extrabold text-emerald-900 block text-sm">
-                📋 যেভাবে Pixel ID ও Conversion API Token বের করবেন:
+          {/* Meta Guide Box */}
+          {showMetaGuide && (
+            <div className="p-4 rounded-xl bg-blue-50/90 border border-blue-200 text-xs text-slate-700 space-y-2 animate-fadeIn">
+              <span className="font-extrabold text-blue-900 block text-sm">
+                📋 যেভাবে Meta Pixel ID ও CAPI Token বের করবেন:
               </span>
               <ol className="list-decimal list-inside space-y-1.5 text-slate-700">
                 <li>
-                  <a href="https://business.facebook.com/events_manager2" target="_blank" rel="noreferrer" className="text-emerald-700 underline font-bold inline-flex items-center gap-1">
+                  <a href="https://business.facebook.com/events_manager2" target="_blank" rel="noreferrer" className="text-blue-700 underline font-bold inline-flex items-center gap-1">
                     Meta Events Manager <ExternalLink className="w-3 h-3 inline" />
                   </a> এ যান।
                 </li>
@@ -362,7 +346,7 @@ export default function AdminSettingsPage() {
           <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-700">
+                <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-700">
                   <Sparkles className="w-4 h-4" />
                 </div>
                 <div>
@@ -370,7 +354,7 @@ export default function AdminSettingsPage() {
                     Token-based Conversion API
                   </span>
                   <span className="text-[11px] text-slate-500">
-                    সার্ভার-সাইড সরাসরি ডেটা ট্র্যাকিং (iOS 14+ ও অ্যাডব্লকার বাইপাস)
+                    সার্ভার-সাইড সরাসরি ফেসবুক ডেটা ট্র্যাকিং (iOS 14+ ও অ্যাডব্লকার বাইপাস)
                   </span>
                 </div>
               </div>
@@ -383,7 +367,7 @@ export default function AdminSettingsPage() {
                   onChange={(e) => setSettings({ ...settings, fbCapiEnabled: e.target.checked })}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
               </label>
             </div>
 
@@ -400,7 +384,7 @@ export default function AdminSettingsPage() {
                     placeholder="Api token (যেমন: EAAB...)"
                     value={settings.fbCapiToken || ''}
                     onChange={(e) => setSettings({ ...settings, fbCapiToken: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-mono text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none transition-all resize-none shadow-xs"
+                    className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-mono text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none shadow-xs"
                   />
                   <div className="p-3 rounded-xl bg-amber-50/90 border border-amber-200/90 text-[11px] text-amber-900 leading-relaxed">
                     <p className="font-semibold mb-1">
@@ -419,10 +403,10 @@ export default function AdminSettingsPage() {
                   </label>
                   <input
                     type="text"
-                    placeholder="যেমন: TEST89595"
+                    placeholder="যেমন: TEST89595 বা TEST94492"
                     value={settings.fbTestEventCode || ''}
                     onChange={(e) => setSettings({ ...settings, fbTestEventCode: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-mono font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none transition-all shadow-xs"
+                    className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-mono font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-xs"
                   />
                   <p className="text-[11px] text-slate-500">
                     Use this if you need to test the server-side event in Meta Events Manager &gt; Test Events. Remove it after testing is complete.
@@ -431,44 +415,191 @@ export default function AdminSettingsPage() {
               </div>
             )}
           </div>
+        </div>
 
-          {/* Supported Events Showcase */}
-          <div className="mt-4 pt-4 border-t border-slate-100">
-            <span className="block text-xs font-bold text-slate-700 mb-2">
-              ইভেন্ট ট্র্যাকিং স্ট্যাটাস (স্বয়ংক্রিয়ভাবে সক্রিয়):
+        {/* ============================================================== */}
+        {/* 4. TIKTOK PIXEL & EVENTS API (TIKTOK CAPI) */}
+        {/* ============================================================== */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5">
+          <div className="pb-3 border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
+            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <Code className="w-5 h-5 text-rose-600" />
+              <span>২. টিকটক পিক্সেল ও ইভেন্টস এপিআই (TikTok Pixel & Events API)</span>
+            </h2>
+            <span className="text-xs bg-rose-100 text-rose-800 font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-rose-600" />
+              TikTok Events API Ready
             </span>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col gap-0.5">
-                <span className="font-mono font-bold text-emerald-700 flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  PageView
-                </span>
-                <span className="text-[10px] text-slate-500">পেইজে প্রবেশের সাথে সাথে</span>
+          </div>
+
+          <p className="text-xs text-slate-600 leading-relaxed">
+            টিকটক অ্যাডস এর পিক্সেল আইডি ও সার্ভার-সাইড Events API কনফিগার করুন। এর মাধ্যমে টিকটক অ্যাড ম্যানেজার ১০০% সঠিক পার্চেজ ও কনভার্সন ডেটা ক্যাপচার করতে পারবে।
+          </p>
+
+          {/* TikTok Pixel ID */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-slate-700">
+                TikTok Pixel ID
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowTikTokGuide(!showTikTokGuide)}
+                className="text-[11px] font-bold text-rose-600 hover:text-rose-700 underline flex items-center gap-1 cursor-pointer"
+              >
+                <HelpCircle className="w-3 h-3" />
+                How to get it?
+              </button>
+            </div>
+            <input
+              type="text"
+              placeholder="যেমন: CXXXXXXXXXXXXXX"
+              value={settings.tiktokPixelId || ''}
+              onChange={(e) => setSettings({ ...settings, tiktokPixelId: e.target.value })}
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-rose-500 outline-none transition-all"
+            />
+            <p className="text-[11px] text-slate-400">
+              TikTok Ads Manager এর Assets &gt; Events থেকে আপনার Pixel ID টি দিন।
+            </p>
+          </div>
+
+          {/* TikTok Guide Box */}
+          {showTikTokGuide && (
+            <div className="p-4 rounded-xl bg-rose-50/90 border border-rose-200 text-xs text-slate-700 space-y-2 animate-fadeIn">
+              <span className="font-extrabold text-rose-900 block text-sm">
+                📋 যেভাবে TikTok Pixel ID ও Events API Token বের করবেন:
+              </span>
+              <ol className="list-decimal list-inside space-y-1.5 text-slate-700">
+                <li>
+                  <a href="https://ads.tiktok.com/" target="_blank" rel="noreferrer" className="text-rose-700 underline font-bold inline-flex items-center gap-1">
+                    TikTok Ads Manager <ExternalLink className="w-3 h-3 inline" />
+                  </a> এ লগইন করে <strong>Assets &gt; Events &gt; Web Events</strong> এ যান।
+                </li>
+                <li>আপনার Pixel সিলেক্ট করুন এবং Pixel ID কপি করে উপরে দিন।</li>
+                <li>Pixel-এর <strong>Settings</strong> ট্যাবে যান এবং নিচে স্ক্রল করে <strong>Events API</strong> সেকশনে <em>&quot;Generate Access Token&quot;</em> বাটনে ক্লিক করুন।</li>
+                <li>প্রাপ্ত দীর্ঘ Access Token টি কপি করে নিচের <strong>TikTok Access Token</strong> বক্সে বসিয়ে সেভ করুন।</li>
+              </ol>
+            </div>
+          )}
+
+          {/* TikTok Token-Based Events API Switch Card */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center text-rose-700">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="text-sm font-extrabold text-slate-900 block leading-tight">
+                    Token-based Events API (TikTok Server CAPI)
+                  </span>
+                  <span className="text-[11px] text-slate-500">
+                    সার্ভার-সাইড সরাসরি টিকটক ডেটা ট্র্যাকিং (Deduplicated with Browser Pixel)
+                  </span>
+                </div>
               </div>
 
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col gap-0.5">
-                <span className="font-mono font-bold text-emerald-700 flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  ViewContent
-                </span>
-                <span className="text-[10px] text-slate-500">পণ্য ও মূল্যসহ সক্রিয়</span>
-              </div>
+              {/* Toggle Switch */}
+              <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                <input
+                  type="checkbox"
+                  checked={settings.tiktokCapiEnabled !== false}
+                  onChange={(e) => setSettings({ ...settings, tiktokCapiEnabled: e.target.checked })}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-600"></div>
+              </label>
+            </div>
 
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col gap-0.5">
-                <span className="font-mono font-bold text-emerald-700 flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  InitiateCheckout
-                </span>
-                <span className="text-[10px] text-slate-500">অর্ডার ফর্মে তথ্য দেওয়া শুরু করলে</span>
-              </div>
+            {/* If TikTok CAPI is enabled, show Token and Test Code inputs */}
+            {settings.tiktokCapiEnabled !== false && (
+              <div className="space-y-4 pt-3 border-t border-slate-200 animate-fadeIn">
+                {/* TikTok Events API Token */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700">
+                    TikTok Events API Access Token:
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder="TikTok Access Token (যেমন: act_... বা লম্বা স্ট্রিং)"
+                    value={settings.tiktokCapiToken || ''}
+                    onChange={(e) => setSettings({ ...settings, tiktokCapiToken: e.target.value })}
+                    className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-mono text-slate-900 focus:ring-2 focus:ring-rose-500 outline-none transition-all resize-none shadow-xs"
+                  />
+                  <div className="p-3 rounded-xl bg-amber-50/90 border border-amber-200/90 text-[11px] text-amber-900 leading-relaxed">
+                    <p className="font-semibold mb-1">
+                      Add the TikTok Events API token for this pixel:
+                    </p>
+                    <p className="text-amber-800">
+                      Send events directly from your web server to TikTok through the Events API. This prevents ad attribution loss and ensures 100% of purchase conversions are recorded in TikTok Ads Manager.
+                    </p>
+                  </div>
+                </div>
 
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col gap-0.5">
-                <span className="font-mono font-bold text-emerald-700 flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  Purchase (CAPI)
-                </span>
-                <span className="text-[10px] text-slate-500">ব্রাউজার + সার্ভার (Deduplicated ⚡)</span>
+                {/* TikTok Test Event Code */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700">
+                    TikTok Test Event Code (ঐচ্ছিক - টেস্ট করার জন্য):
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="যেমন: TEST12345"
+                    value={settings.tiktokTestEventCode || ''}
+                    onChange={(e) => setSettings({ ...settings, tiktokTestEventCode: e.target.value })}
+                    className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-mono font-bold text-slate-900 focus:ring-2 focus:ring-rose-500 outline-none transition-all shadow-xs"
+                  />
+                  <p className="text-[11px] text-slate-500">
+                    TikTok Ads Manager &gt; Events &gt; Test Events ট্যাবের টেস্ট কোডটি এখানে বসিয়ে অর্ডার সাবমিট করে লাইভ টেস্ট করতে পারবেন। টেস্ট শেষ হলে কোডটি মুছে দিন।
+                  </p>
+                </div>
               </div>
+            )}
+          </div>
+        </div>
+
+        {/* ============================================================== */}
+        {/* UNIFIED EVENT TRACKING STATUS SHOWCASE */}
+        {/* ============================================================== */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="block text-xs font-bold text-slate-700">
+              ইভেন্ট ট্র্যাকিং স্ট্যাটাস (Meta ও TikTok উভয় প্ল্যাটফর্মে সক্রিয়):
+            </span>
+            <span className="text-[11px] font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+              Full E-Commerce Ready
+            </span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+            <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col gap-0.5">
+              <span className="font-mono font-bold text-emerald-700 flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                PageView
+              </span>
+              <span className="text-[10px] text-slate-500">পেইজে প্রবেশের সাথে সাথে</span>
+            </div>
+
+            <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col gap-0.5">
+              <span className="font-mono font-bold text-emerald-700 flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                ViewContent
+              </span>
+              <span className="text-[10px] text-slate-500">পণ্য ও মূল্যসহ সক্রিয়</span>
+            </div>
+
+            <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col gap-0.5">
+              <span className="font-mono font-bold text-emerald-700 flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                InitiateCheckout
+              </span>
+              <span className="text-[10px] text-slate-500">অর্ডার ফর্মে তথ্য দেওয়া শুরু করলে</span>
+            </div>
+
+            <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col gap-0.5">
+              <span className="font-mono font-bold text-emerald-700 flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                Purchase (CAPI)
+              </span>
+              <span className="text-[10px] text-slate-500">Meta + TikTok (Deduplicated ⚡)</span>
             </div>
           </div>
         </div>
